@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Floor Framing Optimizer</title>
+
+    <meta property="og:title" content="StructOptima" />
+    <meta
+      property="og:description"
+      content="Intuitive, easy to use applications for the Modern Engineer"
+    />
+    <script
+      src="https://kit.fontawesome.com/78b2bdc1b5.js"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    
+    <link href="../main.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/icon.css" />
+    <link rel="stylesheet" href="/css/MCTS_floor.css" />
+    <link rel="stylesheet" href="/css/normalize.css" />
+
+  </head>
+  <body>
+
+    <!-- Navbar -->
+    <header class="bg-black border-b border-gray-700 p-4">
+      <nav class="flex justify-between items-center">
+        <!-- Navbar Logo -->
+        <a href="../index.html" class="flex items-center gap-2">
+          <img class="h-6" src="../images/StructOptima_logo.png" alt="" />
+          <span class="text-2xl text-white font-bold">Struct Optima</span>
+        </a>
+
+        <!-- Mobile Menu bars -->
+        <div class="text-white lg:hidden">
+          <i class="fas fa-bars fa-2xl"></i>
+        </div>
+
+        <!-- Navbar Items -->
+        <ul class="hidden lg:flex lg:items-center lg:w-auto lg:gap-4">
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../apps.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Apps</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../research-articles.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Research Articles</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../about.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >About</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../contact.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Contact</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+
+    
+
+    <div class="container mx-auto p-4">
+      <section class="">
+        <div class="mb-4">
+          <h1 class="text-4xl font-bold text-gray-800">
+            Timber Floor Framing Optimizer
+          </h1>
+        </div>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          The following program yields the optimal timber floor framing solution
+          for a variable rectangular floor layout under a given set of loading
+          parameters and design constraints. The program is based on the
+          Monte-Carlo-Tree-Search algorithm and is capable of finding a near
+          optimal solution in a matter of seconds.
+        </p>
+      </section>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Canvas and Configuration Options, taking up 2/3 of the space -->
+        <div
+          class="md:col-span-2 card bg-base-100 shadow-xl border border-base-300 rounded-box overflow-hidden"
+        >
+          <div class="card-header bg-blue-950 text-white p-4 rounded-t-lg">
+            <h2 class="card-title">2D Canvas Render</h2>
+          </div>
+          <div class="card-body p-4">
+            <div class="flex gap-4">
+              <canvas id="MCTS_floor_canvas" class="flex-1"></canvas>
+              <div id="results_legend" class="flex-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sliders for Configuration Parameters -->
+        <div class="">
+          <!-- Dimensions Section -->
+          <div
+            tabindex="0"
+            class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mb-4"
+          >
+            <input
+              type="checkbox"
+              name="accordion"
+              checked="checked"
+              class="peer"
+            />
+            <div
+              class="collapse-title text-xl font-medium bg-blue-950 text-white"
+            >
+              Dimensions
+            </div>
+            <div class="collapse-content bg-base-200 peer-checked:bg-base-100">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text"
+                    >x length: <span id="xValue">4000</span> mm</span
+                  >
+                </label>
+                <input
+                  type="range"
+                  min="2000"
+                  max="8000"
+                  step="200"
+                  value="4000"
+                  class="range range-primary"
+                  id="x"
+                  name="params"
+                />
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text"
+                    >y length: <span id="yValue">4000</span> mm</span
+                  >
+                </label>
+                <input
+                  type="range"
+                  min="2000"
+                  max="8000"
+                  step="200"
+                  value="4000"
+                  class="range range-primary"
+                  id="y"
+                  name="params"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Constraints Section -->
+          <div
+            tabindex="0"
+            class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mb-4"
+          >
+            <input
+              type="checkbox"
+              name="accordion"
+              checked="checked"
+              class="peer"
+            />
+            <div
+              class="collapse-title text-xl font-medium bg-blue-950 text-white"
+            >
+              Constraints
+            </div>
+            <div class="collapse-content bg-base-200 peer-checked:bg-base-100">
+              <!-- Content for Constraints -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text"
+                    >Max Allowable Deflection:
+                    <span id="maxDeflectionValue">40</span> mm</span
+                  >
+                </label>
+                <input
+                  type="range"
+                  min="15"
+                  max="100"
+                  step="1"
+                  value="40"
+                  class="range range-primary"
+                  id="maxDeflection"
+                  name="params"
+                />
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text"
+                    >Max Allowable Deflection Ratio: 1/<span id="maxRatioValue"
+                      >350</span
+                    ></span
+                  >
+                </label>
+                <input
+                  type="range"
+                  min="200"
+                  max="500"
+                  step="10"
+                  value="350"
+                  class="range range-primary"
+                  id="maxRatio"
+                  name="params"
+                />
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text"
+                    >Max Timber Depth:
+                    <span id="maxDepthValue">200</span> mm</span
+                  >
+                </label>
+                <input
+                  type="range"
+                  min="90"
+                  max="300"
+                  step="1"
+                  value="200"
+                  class="range range-primary"
+                  id="maxDepth"
+                  name="params"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Loads Section -->
+          <div
+            class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mb-4"
+          >
+            <input
+              type="checkbox"
+              name="accordion"
+              checked="checked"
+              class="peer"
+            />
+            <div
+              class="collapse-title text-xl font-medium bg-blue-950 text-white"
+            >
+              Loads
+            </div>
+            <div class="collapse-content bg-base-200 peer-checked:bg-base-100">
+              <!-- Content for Loads -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text"
+                    >Pressure Load:
+                    <span id="pressureLoadValue">3</span> kPa</span
+                  >
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="0.01"
+                  step="0.001"
+                  value="0.003"
+                  class="range range-primary"
+                  id="pressureLoad"
+                  name="params"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Results Section -->
+          <div
+            class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mb-4"
+          >
+            <input
+              type="checkbox"
+              name="accordion"
+              checked="checked"
+              class="peer"
+            />
+            <div
+              class="collapse-title text-xl font-medium bg-blue-950 text-white"
+            >
+              Results
+            </div>
+            <div
+              class="collapse-content bg-base-200 peer-checked:bg-base-100 pt-4"
+            >
+              <!-- Added pt-4 here for padding at the top -->
+              <div class="flex gap-4 mb-4">
+                <button
+                  type="button"
+                  onclick="callAPI()"
+                  class="btn bg-blue-950 text-white hover:bg-blue-800"
+                >
+                  CALCULATE
+                </button>
+                <button id="downloadBtn" class="btn">
+                  Save Results to File
+                </button>
+              </div>
+              <div id="results_slider_tile"></div>
+              <!-- Radio buttons for configuration types -->
+              <div class="form-control">
+                <label class="label cursor-pointer">
+                  <span class="label-text">Basic Configuration</span>
+                  <input
+                    type="radio"
+                    name="renderOption"
+                    value="basic"
+                    class="radio checked:bg-blue-500"
+                    checked
+                  />
+                </label>
+                <label class="label cursor-pointer">
+                  <span class="label-text">Displacement</span>
+                  <input
+                    type="radio"
+                    name="renderOption"
+                    value="displacement"
+                    class="radio checked:bg-blue-500"
+                  />
+                </label>
+                <label class="label cursor-pointer">
+                  <span class="label-text">Strength</span>
+                  <input
+                    type="radio"
+                    name="renderOption"
+                    value="strength"
+                    class="radio checked:bg-blue-500"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Results Display -->
+        <div
+          class="md:col-span-3 card bg-base-100 shadow-xl border border-gray-200 rounded-lg overflow-hidden"
+        >
+          <div class="card-header bg-blue-950 text-white p-4 rounded-t-lg">
+            <h2 class="card-title">Results</h2>
+          </div>
+          <div class="card-body p-4">
+            <div id="results"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer footer-center p-10 bg-black text-base-content">
+      <div class="container mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 text-lg">
+          <!-- Increased font size for all content -->
+          <!-- Footer logo and brand name -->
+          <div class="flex flex-col items-center md:items-start">
+            <div class="mb-2">
+              <img
+                src="../images/StructOptima_logo.png"
+                class="w-10 h-10"
+                alt="Struct Optima Logo"
+              />
+              <span class="text-2xl font-bold text-white">Struct Optima</span>
+              <!-- Increased title font size -->
+            </div>
+            <p class="text-gray-400">Copyright © 2023 Gabriel Garayalde</p>
+          </div>
+
+          <!-- Products Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Products</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >Apps</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Eurocodes</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >AS/NZ Standards</a
+            >
+          </div>
+
+          <!-- Company Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Company</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >About</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Research Articles</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Blog</a
+            >
+          </div>
+
+          <!-- Support Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Support</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >Contact</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Knowledge Base</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >FAQ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../js/MCTS_Floor.js"></script>
+  </body>
+</html>

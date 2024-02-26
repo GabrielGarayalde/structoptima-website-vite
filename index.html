@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+    <link href="/main.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  </head>
+
+  <body>
+    <button class="btn w-64 rounded-full">Button</button>
+
+    <header class="bg-black border-b border-gray-700 p-4">
+      <nav class="flex justify-between items-center">
+        <!-- Navbar Logo -->
+        <a href="../index.html" class="flex items-center gap-2">
+          <img class="h-6" src="./images/StructOptima_logo.png" alt="" />
+          <span class="text-2xl text-white font-bold">Struct Optima</span>
+        </a>
+
+        <!-- Mobile Menu bars -->
+        <div class="text-white lg:hidden">
+          <i class="fas fa-bars fa-2xl"></i>
+        </div>
+
+        <!-- Navbar Items -->
+        <ul class="hidden lg:flex lg:items-center lg:w-auto lg:gap-4">
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../apps.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Apps</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../research-articles.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Research Articles</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../about.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >About</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../contact.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Contact</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Block Hero -->
+    <section class="block block--dark block--skewed-left hero">
+      <div class="container flex flex--columntorow">
+        <!-- block__header hero__content -->
+        <header
+          class="block__header flex flex--col flex--center"
+          data-aos="fade-right"
+        >
+          <h1 class="block__heading">
+            Apps for the Modern Structural Engineer
+          </h1>
+          <p class="hero__tagline">
+            Take the hassle out of engineering codes with intuitive applications
+            on the web.
+          </p>
+          <a href="apps.html" class="btn btn--accent btn--stretch"
+            >Get started</a
+          >
+        </header>
+
+        <img
+          class="hero__image"
+          src="images/StructOptima_hero_image.png"
+          alt=""
+          data-aos="fade-left"
+        />
+      </div>
+    </section>
+
+    <!-- Features Block -->
+    <section class="block container">
+      <header class="block__header">
+        <h1>Welcome to StructOptima</h1>
+        <h2>The app repository to enhance your engineering</h2>
+        <p>
+          Here you can find a collection of useful apps in the 'apps' tab that
+          are free and require no sign up.
+        </p>
+        <p>
+          You can also find our research publications in the 'Research Articles'
+          tab. Here we showcase interactive applications that form the basis of
+          the research.
+        </p>
+      </header>
+    </section>
+
+    <!--  Callout -->
+    <div class="callout callout--primary">
+      <div class="flex flex--columntorow flex--space-around">
+        <div class="callout__content">
+          <h2 class="callout__heading">Ready to get started?</h2>
+          <p>
+            This website is still under construction. If you are interested in
+            getting to know more or signing up, please stay tuned.
+          </p>
+        </div>
+        <a href="#" class="btn btn--secondary btn--stretch">Get Started</a>
+      </div>
+    </div>
+
+    <footer class="footer footer-center p-10 bg-black text-base-content">
+      <div class="container mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 text-lg">
+          <!-- Increased font size for all content -->
+          <!-- Footer logo and brand name -->
+          <div class="flex flex-col items-center md:items-start">
+            <div class="mb-2">
+              <img
+                src="../images/StructOptima_logo.png"
+                class="w-10 h-10"
+                alt="Struct Optima Logo"
+              />
+              <span class="text-2xl font-bold text-white">Struct Optima</span>
+              <!-- Increased title font size -->
+            </div>
+            <p class="text-gray-400">Copyright © 2023 Gabriel Garayalde</p>
+          </div>
+
+          <!-- Products Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Products</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >Apps</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Eurocodes</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >AS/NZ Standards</a
+            >
+          </div>
+
+          <!-- Company Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Company</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >About</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Research Articles</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Blog</a
+            >
+          </div>
+
+          <!-- Support Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Support</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >Contact</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Knowledge Base</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >FAQ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- <script src="js/collapsible.js" type="module"></script> -->
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
+  </body>
+</html>
