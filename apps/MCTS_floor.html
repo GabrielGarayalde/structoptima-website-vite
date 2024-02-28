@@ -24,7 +24,6 @@
 
     <!-- <link rel="stylesheet" href="../css/tailwind_extra.css" /> -->
     <!-- <link rel="stylesheet" href="../css/normalize.css" /> -->
-    
   </head>
   <body>
     <!-- Navbar -->
@@ -76,7 +75,7 @@
     </header>
 
     <div class="container mx-auto p-4">
-      <section class="">
+      <section class="my-8">
         <div class="mb-4">
           <h1 class="text-4xl font-bold text-gray-800">
             Timber Floor Framing Optimizer
@@ -128,7 +127,7 @@
             <div class="collapse-content bg-base-200 peer-checked:bg-base-100">
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text"
+                  <span class="label-text text-base"
                     >x length: <span id="xValue">4000</span> mm</span
                   >
                 </label>
@@ -138,14 +137,14 @@
                   max="8000"
                   step="200"
                   value="4000"
-                  class="range "
+                  class="range range-sm"
                   id="x"
                   name="params"
                 />
               </div>
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text"
+                  <span class="label-text text-base"
                     >y length: <span id="yValue">4000</span> mm</span
                   >
                 </label>
@@ -155,7 +154,7 @@
                   max="8000"
                   step="200"
                   value="4000"
-                  class="range"
+                  class="range range-sm"
                   id="y"
                   name="params"
                 />
@@ -183,7 +182,7 @@
               <!-- Content for Constraints -->
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text"
+                  <span class="label-text text-base"
                     >Max Allowable Deflection:
                     <span id="maxDeflectionValue">40</span> mm</span
                   >
@@ -194,14 +193,14 @@
                   max="100"
                   step="1"
                   value="40"
-                  class="range"
+                  class="range range-sm"
                   id="maxDeflection"
                   name="params"
                 />
               </div>
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text"
+                  <span class="label-text text-base"
                     >Max Allowable Deflection Ratio: 1/<span id="maxRatioValue"
                       >350</span
                     ></span
@@ -213,14 +212,14 @@
                   max="500"
                   step="10"
                   value="350"
-                  class="range"
+                  class="range range-sm"
                   id="maxRatio"
                   name="params"
                 />
               </div>
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text"
+                  <span class="label-text text-base"
                     >Max Timber Depth:
                     <span id="maxDepthValue">200</span> mm</span
                   >
@@ -231,7 +230,7 @@
                   max="300"
                   step="1"
                   value="200"
-                  class="range"
+                  class="range range-sm"
                   id="maxDepth"
                   name="params"
                 />
@@ -258,7 +257,7 @@
               <!-- Content for Loads -->
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text"
+                  <span class="label-text text-base"
                     >Pressure Load:
                     <span id="pressureLoadValue">3</span> kPa</span
                   >
@@ -269,7 +268,7 @@
                   max="0.01"
                   step="0.001"
                   value="0.003"
-                  class="range"
+                  class="range range-sm"
                   id="pressureLoad"
                   name="params"
                 />

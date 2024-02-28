@@ -476,12 +476,13 @@ function renderConfigBasic(data) {
 }
 
 function getColorForDisplacementRatio(ratio) {
-  if (ratio < 300) {
+
+  if (ratio < maxRatio.value) {
     // Return yellow for ratios less than 300
     return `rgb(255,255,0)`; // Yellow
   } else {
-    // Normalize ratio value to [0, 1] within the range of 300 to 1000
-    let normalized = Math.min(Math.max((ratio - 300) / (1000 - 300), 0), 1);
+    // Normalize ratio value to [0, 1] within the range of deflection ratio to 1000
+    let normalized = Math.min(Math.max((ratio - maxRatio.value) / (1000 - maxRatio.value), 0), 1);
     // Linear interpolation between red (for normalized = 0) and blue (for normalized = 1)
     let r = (255 * (1 - normalized)).toFixed(0);
     let b = (255 * normalized).toFixed(0);

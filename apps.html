@@ -8,7 +8,7 @@
     <link href="/main.css" rel="stylesheet" />
   </head>
 
-  <body>
+  <body class="flex flex-col min-h-screen">
     <header class="bg-black border-b border-gray-700 p-4">
       <nav class="flex justify-between items-center">
         <!-- Navbar Logo -->
@@ -57,61 +57,62 @@
     </header>
 
     <!-- APPS Section with Tailwind CSS and DaisyUI -->
-    <section class="container mx-auto py-12">
-      <div class="flex flex-wrap gap-10 justify-center">
-        <!-- MCTS Floor Card -->
-        <a
-          href="/apps/MCTS_floor.html"
-          class="transform transition-transform hover:scale-105"
-        >
-          <div class="card card-bordered w-56 overflow-hidden">
-            <div class="card-body p-0">
-              <div class="bg-primary text-white text-center py-2">
-                <h4 class="text-lg">Timber Floor Framing Optimizer</h4>
-                <h5 class="text-sm">01/2024</h5>
-              </div>
-              <img
-                class="object-cover h-44 w-full"
-                src="./images/MCTS_floor.jpg"
-                alt=""
-              />
-              <div class="bg-gray-200 p-4">
-                <p>
-                  Uses optimization algorithms to find the most efficient timber
-                  floor framing layout
-                </p>
-              </div>
-            </div>
-          </div>
-        </a>
-
-        <!-- Column Design Card -->
-        <a
-          href="/apps/column-design.html"
-          class="transform transition-transform hover:scale-105"
-        >
-          <div class="card card-bordered w-56 overflow-hidden">
-            <div class="card-body p-0">
-              <div class="bg-primary text-white text-center py-2">
-                <h4 class="text-lg">Beam-Column Design to AS 4100</h4>
-                <h5 class="text-sm">10/2023</h5>
-              </div>
-              <img
-                class="object-cover h-44 w-full"
-                src="./images/column-design.png"
-                alt=""
-              />
-              <div class="bg-gray-200 p-4">
-                <p>
-                  Interactive column design calculator. Yields optimal steel
-                  section for members subject to combined actions
-                </p>
+    <main class="flex-grow">
+      <section class="container mx-auto py-12">
+        <div class="flex flex-wrap gap-10 justify-center">
+          <!-- MCTS Floor Card -->
+          <a
+            href="/apps/MCTS_floor.html"
+            class="transform transition-transform hover:scale-105"
+          >
+            <div class="card card-bordered w-56 overflow-hidden">
+              <div class="card-body p-0">
+                <div class="bg-primary text-white text-center py-2">
+                  <h4 class="text-lg">Timber Floor Framing Optimizer</h4>
+                  <h5 class="text-sm">01/2024</h5>
+                </div>
+                <img
+                  class="object-cover h-44 w-full"
+                  src="./images/MCTS_floor.jpg"
+                  alt=""
+                />
+                <div class="bg-gray-200 p-4">
+                  <p>
+                    Uses optimization algorithms to find the most efficient timber
+                    floor framing layout
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </a>
-      </div>
-    </section>
+          </a>
+          <!-- Column Design Card -->
+          <a
+            href="/apps/column-design.html"
+            class="transform transition-transform hover:scale-105"
+          >
+            <div class="card card-bordered w-56 overflow-hidden">
+              <div class="card-body p-0">
+                <div class="bg-primary text-white text-center py-2">
+                  <h4 class="text-lg">Beam-Column Design to AS 4100</h4>
+                  <h5 class="text-sm">10/2023</h5>
+                </div>
+                <img
+                  class="object-cover h-44 w-full"
+                  src="./images/column-design.png"
+                  alt=""
+                />
+                <div class="bg-gray-200 p-4">
+                  <p>
+                    Interactive column design calculator. Yields optimal steel
+                    section for members subject to combined actions
+                  </p>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>
+    </main>
 
     <footer class="footer footer-center p-10 bg-black text-base-content">
       <div class="container mx-auto">
