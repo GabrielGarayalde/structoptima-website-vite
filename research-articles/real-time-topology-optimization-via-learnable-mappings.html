@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DYNUTOP</title>
+
+    <meta property="og:title" content="StructOptima" />
+    <meta
+      property="og:description"
+      content="Intuitive, easy to use applications for the Modern Engineer"
+    />
+    <script
+      src="https://kit.fontawesome.com/78b2bdc1b5.js"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link href="../main.css" rel="stylesheet" />
+    <!-- import the tensorflow JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.8.0/dist/tf.min.js"></script>
+    <!-- Import Three JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="/js/OrbitControls.js" type="module"></script>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <header class="bg-black border-b border-gray-700 p-4">
+      <nav class="flex justify-between items-center">
+        <!-- Navbar Logo -->
+        <a href="../index.html" class="flex items-center gap-2">
+          <img class="h-6" src="../images/StructOptima_logo.png" alt="" />
+          <span class="text-2xl text-white font-bold">Struct Optima</span>
+        </a>
+
+        <!-- Mobile Menu bars -->
+        <div class="text-white lg:hidden">
+          <i class="fas fa-bars fa-2xl"></i>
+        </div>
+
+        <!-- Navbar Items -->
+        <ul class="hidden lg:flex lg:items-center lg:w-auto lg:gap-4">
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../apps.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Apps</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../research-articles.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Research Articles</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../about.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >About</a
+            >
+          </li>
+          <li class="py-2 px-8 border-b border-gray-700 lg:border-0">
+            <a
+              href="../contact.html"
+              class="text-lg text-gray-300 hover:text-white transition-colors"
+              >Contact</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Headings and info -->
+
+    <div class="container mx-auto p-4">
+      <section class="my-8">
+        <div class="mb-4">
+          <h1 class="text-4xl font-bold text-gray-800">
+            Real Time Topology Optimization via Learnable Mappings
+          </h1>
+        </div>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          Submitted 07/2023 to International Journal for Numerical Methods in
+          Engineering for review
+        </p>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          Use the sliders to change the location of the supports and the forces.
+          Click on the radio buttons to switch between the optimal density
+          values, the Von Mises stresses, or the dominant principal stress
+          elements. PLEASE ALLOW A FEW SECONDS FOR THE MODEL TO LOAD.
+        </p>
+      </section>
+
+      <div class="container mx-auto p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Canvas Render Section -->
+          <div class="md:col-span-2 card bg-base-100 shadow-xl border border-base-300 rounded-box overflow-hidden mb-4">
+            <div class="card-header bg-primary text-white p-4 rounded-t-lg">
+              <h2 class="card-title">3D Canvas Render</h2>
+            </div>
+            <div class="card-body p-4">
+              <canvas id="DYNUTOP" class="w-full"></canvas>
+              <div id="loading-bar-container" class=" mt-2">
+                <p>Loading...</p>
+                <div id="loading-bar" class="w-full bg-gray-200 rounded-full">
+                  <div class="inner bg-primary h-2 rounded-full" style="width: 50%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parameter Controls Section -->
+          <div class="flex flex-col gap-4">
+
+            <div class="card bg-base-100 shadow-xl border border-base-300 rounded-box overflow-hidden mb-4">
+              <div class="card-header bg-primary text-white p-4 rounded-t-lg">
+                <h4 class="card-title">Parameter Controls</h4>
+              </div>
+              <div class="card-body p-4">
+                  
+                  <div class="form-control">
+                    <label class="label  text-base" for="supportARange">
+                      <span class="label-text">
+                        Support A: <span id="supportAValue">7.5</span> m
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      id="supportARange"
+                      class="range range-sm [--range-shdw:#172554]"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value="0.5"
+                      name="params"
+                    />
+                    <div class="w-full flex justify-between text-xs px-2">
+                      <span>0</span>
+                      <span>15</span>
+                    </div>
+                  </div>
+                  <div class="form-control">
+                    <label class="label  text-base" for="supportBRange">
+                      <span class="label-text">
+                        Support B: <span id="supportBValue">52.5</span> m
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      id="supportBRange"
+                      class="range range-sm [--range-shdw:#172554]"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value="0.5"
+                      name="params"
+                    />
+                    <div class="w-full flex justify-between text-xs px-2">
+                      <span>45</span>
+                      <span>60</span>
+                    </div>
+                  </div>
+                  <!-- Force A Range -->
+                  <div class="form-control">
+                    <label class="label  text-base" for="forceARange">
+                      <span class="label-text">
+                        Force A: <span id="forceAValue">30</span> m
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      id="forceARange"
+                      class="range range-sm [--range-shdw:#172554]"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value="0.5"
+                      name="params"
+                    />
+                    <div class="w-full flex justify-between text-xs px-2">
+                      <span>0</span>
+                      <span>60</span>
+                    </div>
+                  </div>
+  
+                  <!-- Force B Range -->
+                  <div class="form-control">
+                    <label class="label text-base" for="forceBRange">
+                      <span class="label-text">
+                        Force B: <span id="forceBValue">30</span> m
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      id="forceBRange"
+                      class="range range-sm [--range-shdw:#172554]"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value="0.5"
+                      name="params"
+                    />
+                    <div class="w-full flex justify-between text-xs px-2">
+                      <span>0</span>
+                      <span>60</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+  
+              <div class="card bg-base-100 shadow-xl border border-base-300 rounded-box overflow-hidden">
+                <div class="card-header bg-primary text-white p-4 rounded-t-lg">
+                  <h4 class="card-title">Select View Type</h4>
+                </div>
+                <div class="card-body p-4">
+                  <div class="form-control">
+                    <label class="cursor-pointer label">
+                      <span class="label-text">Optimal Topology</span>
+                      <input
+                        type="radio"
+                        name="options"
+                        class="radio checked:bg-blue-500"
+                        value="topopt"
+                        checked
+                      />
+                    </label>
+                    <label class="cursor-pointer label">
+                      <span class="label-text">Von Mises Stress</span>
+                      <input
+                        type="radio"
+                        name="options"
+                        class="radio checked:bg-blue-500"
+                        value="VM"
+                      />
+                    </label>
+                    <label class="cursor-pointer label">
+                      <span class="label-text"
+                        >Tension and Compression Regions</span
+                      >
+                      <input
+                        type="radio"
+                        name="options"
+                        class="radio checked:bg-blue-500"
+                        value="TC"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer  -->
+    <footer class="footer footer-center p-10 bg-black text-base-content">
+      <div class="container mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10 text-lg">
+          <!-- Increased font size for all content -->
+          <!-- Footer logo and brand name -->
+          <div class="flex flex-col items-center md:items-start">
+            <div class="mb-2">
+              <img
+                src="../images/StructOptima_logo.png"
+                class="w-10 h-10"
+                alt="Struct Optima Logo"
+              />
+              <span class="text-2xl font-bold text-white">Struct Optima</span>
+              <!-- Increased title font size -->
+            </div>
+            <p class="text-gray-400">Copyright © 2023 Gabriel Garayalde</p>
+          </div>
+
+          <!-- Products Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Products</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >Apps</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Eurocodes</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >AS/NZ Standards</a
+            >
+          </div>
+
+          <!-- Company Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Company</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >About</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Research Articles</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Blog</a
+            >
+          </div>
+
+          <!-- Support Section -->
+          <div class="flex flex-col items-center md:items-start">
+            <span class="footer-title text-xl text-white">Support</span>
+            <!-- Increased section title font size -->
+            <a
+              href=""
+              class="link link-hover text-gray-400 hover:text-gray-300 mt-2"
+              >Contact</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >Knowledge Base</a
+            >
+            <a href="" class="link link-hover text-gray-400 hover:text-gray-300"
+              >FAQ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../js/DYNUTOP.js" type="module"></script>
+    <script src="../js/collapsible.js" type="module"></script>
+  </body>
+</html>
