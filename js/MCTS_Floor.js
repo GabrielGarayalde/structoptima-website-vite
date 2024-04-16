@@ -19,6 +19,224 @@ function setCanvasSize() {
 // Call this function on page load or whenever you need to adjust the canvas size
 setCanvasSize();
 
+// The functionality for dragging and selcting nodes on the grid
+var isDragging = false;
+let startNode = null;
+let endNode = null;
+var dragStart = { x: 0, y: 0 };
+var dragEnd = { x: 0, y: 0 };
+var selectedNodes = [];
+var canvas = document.getElementById("MCTS_floor_canvas");
+var ctx = canvas.getContext("2d");
+
+document.addEventListener("DOMContentLoaded", function () {
+  const xSlider = document.getElementById("x");
+  const ySlider = document.getElementById("y");
+
+  // Function to handle slider changes
+  function handleDimensionChange() {
+      // Reset loads data
+      loadsData = [];
+      // Redraw the grid or perform any other updates
+      drawGrid();
+
+  }
+
+  // Attach the event listeners
+  xSlider.addEventListener("input", handleDimensionChange);
+  ySlider.addEventListener("input", handleDimensionChange);
+});
+
+canvas.addEventListener("mousedown", function (e) {
+  isDragging = true;
+  dragStart.x = e.offsetX;
+  dragStart.y = e.offsetY;
+  dragEnd.x = e.offsetX;
+  dragEnd.y = e.offsetY;
+  selectedNodes = []; // Clear previous selections
+  updateCanvas();
+});
+
+canvas.addEventListener("mousemove", function (e) {
+  if (isDragging) {
+    dragEnd.x = e.offsetX;
+    dragEnd.y = e.offsetY;
+    selectNodesInRectangle();
+    updateCanvas();
+  }
+});
+
+canvas.addEventListener("mouseup", function (e) {
+  selectNodesInRectangle();
+  if (isDragging && selectedNodes.length > 0) {
+    updateCanvas(); // Update canvas if needed
+    showModal(); // Show the modal only if nodes have been selected
+  }
+  isDragging = false; // Reset dragging flag
+});
+
+function updateCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas first
+  drawGrid(); // Redraw the grid
+  highlightSelectedNodes(); // Highlight selected nodes
+}
+
+function renderLoadsOnCanvas(loads) {
+  const { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData(); // Reuse the gridData for canvas metrics
+  const colors = ["red", "green", "blue", "purple", "orange"]; // Define a set of colors for different loads
+
+  loads.forEach((load, index) => {
+    const color = colors[index % colors.length]; // Cycle through colors for each load
+    ctx.fillStyle = color;
+
+    const x = marginX + load.start[0] * scaleX;
+    const y = marginY + gridSizeY - load.start[1] * scaleY;
+    const width = (load.end[0] - load.start[0]) * scaleX;
+    const height = (load.start[1] - load.end[1]) * scaleY;
+
+    // Draw the rectangle
+    ctx.fillRect(x, y, width, height);
+
+    // Draw the numerical identifier in the middle of the rectangle
+    ctx.fillStyle = "white"; // Use white for better visibility
+    ctx.font = "16px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(`Pressure ${index + 1}`, x + width / 2, y + height / 2);
+  });
+}
+
+function selectNodesInRectangle() {
+  var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
+
+  const startX = Math.min(dragStart.x, dragEnd.x);
+  const endX = Math.max(dragStart.x, dragEnd.x);
+  const startY = Math.min(dragStart.y, dragEnd.y);
+  const endY = Math.max(dragStart.y, dragEnd.y);
+
+  let coordinates = getGridCoordinates(); // Assuming this returns an array of [x, y] pairs
+
+  selectedNodes = coordinates.filter(([x, y]) => {
+    let screenX = marginX + x * scaleX;
+    let screenY = marginY + gridSizeY - y * scaleY;
+    return (
+      screenX >= startX &&
+      screenX <= endX &&
+      screenY >= startY &&
+      screenY <= endY
+    );
+  });
+}
+
+function highlightSelectedNodes() {
+  var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
+
+  ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Semi-transparent red for selected nodes area
+
+  if (selectedNodes.length === 0) {
+    console.log("No nodes selected");
+    return;
+  }
+
+  // Determine the bounds of the selected nodes
+  let minX = Math.min(...selectedNodes.map((node) => node[0]));
+  let maxX = Math.max(...selectedNodes.map((node) => node[0]));
+  let minY = Math.min(...selectedNodes.map((node) => node[1]));
+  let maxY = Math.max(...selectedNodes.map((node) => node[1]));
+
+  // Calculate rectangle dimensions
+  let rectWidth = (maxX - minX) * scaleX;
+  let rectHeight = (maxY - minY) * scaleY;
+
+  if (rectWidth === 0 || rectHeight === 0) {
+    console.log("Selected area forms a line or a point, not a rectangle");
+  } else {
+    // Draw a rectangle that covers all selected nodes
+    ctx.fillRect(
+      marginX + minX * scaleX,
+      marginY + gridSizeY - maxY * scaleY,
+      rectWidth,
+      rectHeight
+    );
+
+    // Assuming node coordinates are structured as [x, y]
+    // Find the corners of the rectangle for the pressure area
+    startNode = [minX, minY];
+    endNode = [maxX, maxY];
+  }
+}
+
+function showModal() {
+  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+  modal.showModal();
+}
+
+function closeModal() {
+  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+  modal.close();
+}
+
+document.addEventListener("DOMContentLoaded", (event) => {
+  // Listener for the accept button
+  const acceptBtn = document.getElementById("acceptButton");
+  acceptBtn.addEventListener("click", acceptLoad);
+
+  // Listener for the cancel button
+  const cancelBtn = document.getElementById("cancelButton");
+  cancelBtn.addEventListener("click", closeModal);
+});
+
+let loadsData = []; // Array to store each load's data
+
+function acceptLoad() {
+  const loadG = document.getElementById("loadInput1").value;
+  const loadQ = document.getElementById("loadInput2").value;
+
+  // Create a new load object
+  const newLoad = {
+    start: startNode,
+    end: endNode,
+    type: "pressure",
+    G: parseFloat(loadG),
+    Q: parseFloat(loadQ),
+  };
+
+  // Append new load to the data array
+  loadsData.push(newLoad);
+  console.log(loadsData);
+  // Update the UI or further process the data
+  updateLoadsTextContainerDisplay(loadsData); // Assumes there's a function to update UI
+  drawGrid();
+  renderLoadsOnCanvas(loadsData); // Update canvas rendering
+  closeModal(); // Close modal after accepting
+}
+
+function updateLoadsTextContainerDisplay(loadsData) {
+  const loadsContainer = document.getElementById("loads-values-container");
+  // First, clear the existing contents of the container
+  loadsContainer.innerHTML = '';
+
+  // Now, loop through each load in the loadsData and create a row for each
+  loadsData.forEach((load, index) => {
+    const newRow = document.createElement("div");
+    newRow.className = "grid grid-cols-3 gap-4 items-center";
+    newRow.innerHTML = `
+        <div class="text-center">
+          <span>Pressure ${index + 1}:</span>
+        </div>
+        <div class="text-center">${load.G} kPa</div>
+        <div class="text-center">${load.Q} kPa</div>
+    `;
+    loadsContainer.appendChild(newRow);
+  });
+}
+
+
+
+
+
+
+
+
 let responseData = null;
 
 // Save the results to a file
@@ -43,7 +261,7 @@ document
   });
 
 document.addEventListener("DOMContentLoaded", () => {
-  const calculateButton = document.getElementById('calculate_btn');
+  const calculateButton = document.getElementById("calculate_btn");
   if (calculateButton) {
     calculateButton.addEventListener("click", callAPI);
   }
@@ -318,7 +536,8 @@ function updateSliderValue(sliderId, displayId) {
   // if the sliderId is pressureLoad, then the display value is multiplied by 1000
   if (sliderId === "pressureLoad") {
     display.textContent = slider.value * 1000;
-  } else {
+  }
+  else {
     display.textContent = slider.value;
   }
 
@@ -395,7 +614,6 @@ drawGrid();
 // Call this function for each slider with its corresponding display element
 updateSliderValue("x", "xValue");
 updateSliderValue("y", "yValue");
-updateSliderValue("pressureLoad", "pressureLoadValue");
 updateSliderValue("maxDeflection", "maxDeflectionValue");
 updateSliderValue("maxDepth", "maxDepthValue");
 updateSliderValue("maxRatio", "maxRatioValue");
@@ -429,14 +647,13 @@ function renderConfigBasic(data) {
   let ctx = canvas.getContext("2d"); // Access the grid parameters
 
   let {
-    maxX,
-    maxY,
     marginX,
     marginY,
-    adjustedWidth,
-    adjustedHeight,
-    gridSizeX,
+    portWidth,
+    portHeight,
     gridSizeY,
+    maxX,
+    maxY,
   } = gridData();
 
   // Iterate over the state object entries
@@ -450,20 +667,17 @@ function renderConfigBasic(data) {
 
       ctx.beginPath();
 
-      let startX =
-        marginX + adjustedWidth * (coordinates[element.start][0] / maxX);
+      let startX = marginX + portWidth * (coordinates[element.start][0] / maxX);
 
       let startY =
         marginY +
         gridSizeY -
-        adjustedHeight * (coordinates[element.start][1] / maxY);
+        portHeight * (coordinates[element.start][1] / maxY);
 
-      let endX = marginX + adjustedWidth * (coordinates[element.end][0] / maxX);
+      let endX = marginX + portWidth * (coordinates[element.end][0] / maxX);
 
       let endY =
-        marginY +
-        gridSizeY -
-        adjustedHeight * (coordinates[element.end][1] / maxY);
+        marginY + gridSizeY - portHeight * (coordinates[element.end][1] / maxY);
 
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
@@ -476,13 +690,15 @@ function renderConfigBasic(data) {
 }
 
 function getColorForDisplacementRatio(ratio) {
-
   if (ratio < maxRatio.value) {
     // Return yellow for ratios less than 300
     return `rgb(255,255,0)`; // Yellow
   } else {
     // Normalize ratio value to [0, 1] within the range of deflection ratio to 1000
-    let normalized = Math.min(Math.max((ratio - maxRatio.value) / (1000 - maxRatio.value), 0), 1);
+    let normalized = Math.min(
+      Math.max((ratio - maxRatio.value) / (1000 - maxRatio.value), 0),
+      1
+    );
     // Linear interpolation between red (for normalized = 0) and blue (for normalized = 1)
     let r = (255 * (1 - normalized)).toFixed(0);
     let b = (255 * normalized).toFixed(0);
@@ -509,14 +725,13 @@ function renderDisplacement(data) {
   let ctx = canvas.getContext("2d");
 
   let {
-    maxX,
-    maxY,
     marginX,
     marginY,
-    adjustedWidth,
-    adjustedHeight,
-    gridSizeX,
+    portWidth,
+    portHeight,
     gridSizeY,
+    maxX,
+    maxY,
   } = gridData();
 
   Object.entries(data.state_detailed).forEach(([key, elements]) => {
@@ -534,11 +749,11 @@ function renderDisplacement(data) {
         let [endX, endY] = coordinates[endNode];
 
         // Adjust coordinates based on grid parameters
-        startX = marginX + adjustedWidth * (startX / maxX);
-        startY = marginY + gridSizeY - adjustedHeight * (startY / maxY);
+        startX = marginX + portWidth * (startX / maxX);
+        startY = marginY + gridSizeY - portHeight * (startY / maxY);
 
-        endX = marginX + adjustedWidth * (endX / maxX);
-        endY = marginY + gridSizeY - adjustedHeight * (endY / maxY);
+        endX = marginX + portWidth * (endX / maxX);
+        endY = marginY + gridSizeY - portHeight * (endY / maxY);
 
         // Calculate color based on the average displacement ratio of the two nodes
         let avgRatio = (displacementRatios[i] + displacementRatios[i + 1]) / 2;
@@ -562,14 +777,13 @@ function renderStrength(data) {
   let ctx = canvas.getContext("2d");
 
   let {
-    maxX,
-    maxY,
     marginX,
     marginY,
-    adjustedWidth,
-    adjustedHeight,
-    gridSizeX,
+    portWidth,
+    portHeight,
     gridSizeY,
+    maxX,
+    maxY,
   } = gridData();
 
   Object.entries(data.state_detailed).forEach(([key, elements]) => {
@@ -587,11 +801,11 @@ function renderStrength(data) {
         let [endX, endY] = coordinates[endNode];
 
         // Adjust coordinates based on grid parameters
-        startX = marginX + adjustedWidth * (startX / maxX);
-        startY = marginY + gridSizeY - adjustedHeight * (startY / maxY);
+        startX = marginX + portWidth * (startX / maxX);
+        startY = marginY + gridSizeY - portHeight * (startY / maxY);
 
-        endX = marginX + adjustedWidth * (endX / maxX);
-        endY = marginY + gridSizeY - adjustedHeight * (endY / maxY);
+        endX = marginX + portWidth * (endX / maxX);
+        endY = marginY + gridSizeY - portHeight * (endY / maxY);
 
         // Calculate color based on the average displacement ratio of the two nodes
         let avgRatio = (displacementRatios[i] + displacementRatios[i + 1]) / 2;
@@ -615,14 +829,13 @@ function annotateConfig(data) {
   let ctx = canvas.getContext("2d"); // Access the grid parameters
 
   let {
-    maxX,
-    maxY,
     marginX,
     marginY,
-    adjustedWidth,
-    adjustedHeight,
-    gridSizeX,
+    portWidth,
+    portHeight,
     gridSizeY,
+    maxX,
+    maxY,
   } = gridData();
 
   Object.entries(data.state).forEach(([key, element]) => {
@@ -649,9 +862,8 @@ function annotateConfig(data) {
     }
 
     // Adjust coordinates based on canvas dimensions and margins
-    const adjustedCenterX = marginX + adjustedWidth * (centerX / maxX);
-    const adjustedCenterY =
-      marginY + gridSizeY - adjustedHeight * (centerY / maxY);
+    const adjustedCenterX = marginX + portWidth * (centerX / maxX);
+    const adjustedCenterY = marginY + gridSizeY - portHeight * (centerY / maxY);
 
     // Prepare label properties
     const labelX = adjustedCenterX + 5; // Slight rightward offset for the label
@@ -699,18 +911,22 @@ function gridData() {
   var marginY = canvas.height * 0.1;
 
   // Adjusted width and height for grid drawing
-  var adjustedWidth = canvas.width - 2 * marginX;
-  var adjustedHeight = canvas.height - 2 * marginY;
+  var portWidth = canvas.width - 2 * marginX;
+  var portHeight = canvas.height - 2 * marginY;
 
-  // Calculate grid size relative to the slider values and adjusted dimensions
-  var gridSizeX = adjustedWidth * (xSlider / maxX);
-  var gridSizeY = adjustedHeight * (ySlider / maxY);
+  var scaleX = portWidth / maxX;
+  var scaleY = portHeight / maxY;
+
+  var gridSizeX = xSlider * scaleX;
+  var gridSizeY = ySlider * scaleY;
 
   return {
     marginX,
     marginY,
-    adjustedWidth,
-    adjustedHeight,
+    portWidth,
+    portHeight,
+    scaleX,
+    scaleY,
     gridSizeX,
     gridSizeY,
     maxX,
