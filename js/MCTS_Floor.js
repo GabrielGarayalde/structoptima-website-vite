@@ -23,6 +23,7 @@ setCanvasSize();
 var isDragging = false;
 let startNode = null;
 let endNode = null;
+let loadsData = []; // Array to store each load's data
 var dragStart = { x: 0, y: 0 };
 var dragEnd = { x: 0, y: 0 };
 var selectedNodes = [];
@@ -35,11 +36,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Function to handle slider changes
   function handleDimensionChange() {
-      // Reset loads data
-      loadsData = [];
-      // Redraw the grid or perform any other updates
-      drawGrid();
-
+    // Reset loads data
+    loadsData = [];
+    // Redraw the grid or perform any other updates
+    drawGrid();
   }
 
   // Attach the event listeners
@@ -78,6 +78,7 @@ canvas.addEventListener("mouseup", function (e) {
 function updateCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas first
   drawGrid(); // Redraw the grid
+  renderLoadsOnCanvas(loadsData); // Update canvas rendering
   highlightSelectedNodes(); // Highlight selected nodes
 }
 
@@ -185,8 +186,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
   cancelBtn.addEventListener("click", closeModal);
 });
 
-let loadsData = []; // Array to store each load's data
-
 function acceptLoad() {
   const loadG = document.getElementById("loadInput1").value;
   const loadQ = document.getElementById("loadInput2").value;
@@ -202,7 +201,7 @@ function acceptLoad() {
 
   // Append new load to the data array
   loadsData.push(newLoad);
-  console.log(loadsData);
+  // console.log(loadsData);
   // Update the UI or further process the data
   updateLoadsTextContainerDisplay(loadsData); // Assumes there's a function to update UI
   drawGrid();
@@ -212,32 +211,48 @@ function acceptLoad() {
 
 function updateLoadsTextContainerDisplay(loadsData) {
   const loadsContainer = document.getElementById("loads-values-container");
-  // First, clear the existing contents of the container
-  loadsContainer.innerHTML = '';
+  // Clear the existing contents of the container
+  loadsContainer.innerHTML = "";
 
-  // Now, loop through each load in the loadsData and create a row for each
+  // Loop through each load in the loadsData and create a row for each
   loadsData.forEach((load, index) => {
     const newRow = document.createElement("div");
-    newRow.className = "grid grid-cols-3 gap-4 items-center";
+    newRow.className = "grid grid-cols-4 gap-4 items-center"; // Updated for 4 columns
+
     newRow.innerHTML = `
-        <div class="text-center">
-          <span>Pressure ${index + 1}:</span>
-        </div>
-        <div class="text-center">${load.G} kPa</div>
-        <div class="text-center">${load.Q} kPa</div>
-    `;
+          <div class="text-center">
+              <span>Pressure ${index + 1}:</span>
+          </div>
+          <div class="text-center">${load.G} kPa</div>
+          <div class="text-center">${load.Q} kPa</div>
+          <div class="text-center">
+              <button class="btn btn-error" id="deleteBtn-${index}">Delete</button>
+          </div>
+      `;
+
     loadsContainer.appendChild(newRow);
+
+    // Add event listener to the delete button
+    document
+      .getElementById(`deleteBtn-${index}`)
+      .addEventListener("click", function () {
+        deleteLoad(index);
+      });
   });
 }
 
+// Function to handle deletion of a load
+function deleteLoad(index) {
+  // Remove the load from the array
+  loadsData.splice(index, 1);
+  drawGrid(); // Redraw the grid
 
+  // Update the UI
+  updateLoadsTextContainerDisplay(loadsData);
+  // Optionally update the canvas if necessary
+  renderLoadsOnCanvas(loadsData);
+}
 
-
-
-
-
-
-let responseData = null;
 
 // Save the results to a file
 document
@@ -263,9 +278,11 @@ document
 document.addEventListener("DOMContentLoaded", () => {
   const calculateButton = document.getElementById("calculate_btn");
   if (calculateButton) {
-    calculateButton.addEventListener("click", callAPI);
+    calculateButton.addEventListener("click", () => callAPI());
   }
 });
+
+let responseData = null;
 
 // callAPI function that takes the base and exponent numbers as parameters
 export function callAPI() {
@@ -273,11 +290,10 @@ export function callAPI() {
 
   const x = document.getElementById("x").value;
   const y = document.getElementById("y").value;
-  const pressureLoad = document.getElementById("pressureLoad").value;
   const maxDeflection = document.getElementById("maxDeflection").value;
   const maxRatio = document.getElementById("maxRatio").value;
   const maxDepth = document.getElementById("maxDepth").value;
-  console.log(x, y, pressureLoad, maxRatio, maxDeflection, maxDepth);
+
   // instantiate a headers object
   var myHeaders = new Headers();
   // add content type header to object
@@ -286,11 +302,14 @@ export function callAPI() {
   var raw = JSON.stringify({
     x: x,
     y: y,
-    pressureLoad: pressureLoad,
+    loads: loadsData,
     maxDeflection: maxDeflection,
     maxRatio: maxRatio,
     maxDepth: maxDepth,
   });
+
+
+  // console.log(raw);
   // create a JSON object with parameters for API call and store in a variable
   var requestOptions = {
     method: "POST",
@@ -303,11 +322,11 @@ export function callAPI() {
     "https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod",
     requestOptions
   )
-    // .then((response) => response.json())
-    .then((response) => response.json())
+    .then((response) => response.text())
     .then((data) => {
-      responseData = JSON.parse(data.body);
-      console.log(responseData);
+      const initialResponseData = JSON.parse(data); // Parse the initial JSON string
+      responseData = JSON.parse(initialResponseData.body); // Parse the nested JSON string in 'body'
+
       drawGrid();
 
       const endTime = performance.now(); // Record end time
@@ -341,8 +360,9 @@ function resultstoTextFile(data, totalTime) {
     ratio: 9,
   };
 
+  // console.log(data.state_basic)
   // Process each row to align columns
-  let textRows = Object.entries(data.state)
+  let textRows = Object.entries(data.state_basic)
     .map(([key, s], index) => {
       return [
         padString(s.type, maxLengths.type),
@@ -426,7 +446,7 @@ function displayResults(data, totalTime) {
   let legendContent = "<h3>Legend</h3>";
 
   // Sort the entries by keys to ensure they are listed in order
-  let sortedEntries = Object.entries(data.state).sort((a, b) =>
+  let sortedEntries = Object.entries(data.state_basic).sort((a, b) =>
     a[0].localeCompare(b[0])
   );
 
@@ -443,7 +463,7 @@ function displayResults(data, totalTime) {
   results_legend.innerHTML = legendContent;
 
   // Generate stateRows HTML as provided
-  let stateRows = Object.entries(data.state)
+  let stateRows = Object.entries(data.state_basic)
     .map(([key, s]) => {
       let spacing = s.type === "joist" ? `${s.spacing}` : ` - `;
       let quantity = s.type === "beam" ? `${s.quantity}` : ` - `;
@@ -536,8 +556,7 @@ function updateSliderValue(sliderId, displayId) {
   // if the sliderId is pressureLoad, then the display value is multiplied by 1000
   if (sliderId === "pressureLoad") {
     display.textContent = slider.value * 1000;
-  }
-  else {
+  } else {
     display.textContent = slider.value;
   }
 
@@ -646,16 +665,10 @@ function renderConfigBasic(data) {
   let canvas = document.getElementById("MCTS_floor_canvas");
   let ctx = canvas.getContext("2d"); // Access the grid parameters
 
-  let {
-    marginX,
-    marginY,
-    portWidth,
-    portHeight,
-    gridSizeY,
-    maxX,
-    maxY,
-  } = gridData();
+  let { marginX, marginY, portWidth, portHeight, gridSizeY, maxX, maxY } =
+    gridData();
 
+  // console.log('state detailed', data.state_detailed)
   // Iterate over the state object entries
   Object.entries(data.state_detailed).forEach(([key, elements]) => {
     elements.forEach((element) => {
@@ -724,15 +737,8 @@ function renderDisplacement(data) {
   let canvas = document.getElementById("MCTS_floor_canvas");
   let ctx = canvas.getContext("2d");
 
-  let {
-    marginX,
-    marginY,
-    portWidth,
-    portHeight,
-    gridSizeY,
-    maxX,
-    maxY,
-  } = gridData();
+  let { marginX, marginY, portWidth, portHeight, gridSizeY, maxX, maxY } =
+    gridData();
 
   Object.entries(data.state_detailed).forEach(([key, elements]) => {
     elements.forEach((element) => {
@@ -776,15 +782,8 @@ function renderStrength(data) {
   let canvas = document.getElementById("MCTS_floor_canvas");
   let ctx = canvas.getContext("2d");
 
-  let {
-    marginX,
-    marginY,
-    portWidth,
-    portHeight,
-    gridSizeY,
-    maxX,
-    maxY,
-  } = gridData();
+  let { marginX, marginY, portWidth, portHeight, gridSizeY, maxX, maxY } =
+    gridData();
 
   Object.entries(data.state_detailed).forEach(([key, elements]) => {
     elements.forEach((element) => {
@@ -828,17 +827,10 @@ function annotateConfig(data) {
   let canvas = document.getElementById("MCTS_floor_canvas");
   let ctx = canvas.getContext("2d"); // Access the grid parameters
 
-  let {
-    marginX,
-    marginY,
-    portWidth,
-    portHeight,
-    gridSizeY,
-    maxX,
-    maxY,
-  } = gridData();
+  let { marginX, marginY, portWidth, portHeight, gridSizeY, maxX, maxY } =
+    gridData();
 
-  Object.entries(data.state).forEach(([key, element]) => {
+  Object.entries(data.state_basic).forEach(([key, element]) => {
     const isJoist = element.type === "joist";
 
     let centerX, centerY;
@@ -936,6 +928,7 @@ function gridData() {
 
 document.querySelectorAll('input[name="renderOption"]').forEach((radio) => {
   radio.addEventListener("change", (event) => {
+    console.log(responseData);
     if (responseData !== null) {
       // Check if responseData has been set
       const selectedOption = event.target.value;
