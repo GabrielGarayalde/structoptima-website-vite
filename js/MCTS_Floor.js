@@ -75,6 +75,45 @@ canvas.addEventListener("mouseup", function (e) {
   isDragging = false; // Reset dragging flag
 });
 
+document.getElementById('loadsAccordion').addEventListener('change', function() {
+  if (this.checked) {
+    console.log("Loads accordion is now open.");
+    drawGrid(); // Redraw the grid
+    renderLoadsOnCanvas(loadsData); // Update canvas rendering
+  }
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const resultsAccordion = document.getElementById('resultsAccordion');
+  const radioButtons = document.querySelectorAll('input[name="renderOption"]');
+
+  // Event listener for the accordion to just redraw or refresh data
+  resultsAccordion.addEventListener('change', function() {
+    if (this.checked && responseData !== null) {
+      console.log("Results accordion is now open.");
+      const selectedOption = document.querySelector('input[name="renderOption"]:checked').value;
+      drawGrid();
+      displayResultsGrid(responseData, selectedOption);
+    } else {
+      console.log("Data is not available or accordion is not open.");
+    }
+  });
+
+  // General event listener for all radio buttons
+  radioButtons.forEach((radio) => {
+    radio.addEventListener('change', (event) => {
+      if (responseData !== null) {
+        console.log("Radio option changed:", event.target.value);
+        drawGrid();
+        displayResultsGrid(responseData, event.target.value);
+      } else {
+        console.log("Data is not available yet.");
+      }
+    });
+  });
+});
+
 function updateCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas first
   drawGrid(); // Redraw the grid
@@ -187,8 +226,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
 });
 
 function acceptLoad() {
-  const loadG = document.getElementById("loadInput1").value;
-  const loadQ = document.getElementById("loadInput2").value;
+  const loadG = document.getElementById("loadInput1").value / 1000;
+  const loadQ = document.getElementById("loadInput2").value / 1000;
 
   // Create a new load object
   const newLoad = {
@@ -223,8 +262,8 @@ function updateLoadsTextContainerDisplay(loadsData) {
           <div class="text-center">
               <span>Pressure ${index + 1}:</span>
           </div>
-          <div class="text-center">${load.G} kPa</div>
-          <div class="text-center">${load.Q} kPa</div>
+          <div class="text-center">${load.G * 1000} kPa</div>
+          <div class="text-center">${load.Q * 1000} kPa</div>
           <div class="text-center">
               <button class="btn btn-error" id="deleteBtn-${index}">Delete</button>
           </div>
