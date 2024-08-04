@@ -712,25 +712,37 @@ function renderConfigBasic(data) {
   // Iterate over the state object entries
   Object.entries(data.state_detailed).forEach(([key, elements]) => {
     elements.forEach((element) => {
+
+      
       let type = element.type;
-      let start, end;
+      let cartesian_start, cartesian_end;
       // Determine start and end points based on the type of element
-      start = coordinates[element.start];
-      end = coordinates[element.end];
+      cartesian_start = coordinates[element.start];
+      cartesian_end = coordinates[element.end];
+      
+      // Access the direction from data.state using the key
+      if (cartesian_start[1] === cartesian_end[1]) {
+        cartesian_start[0] += 100;
+        cartesian_end[0] += -100;
+      } else {
+        cartesian_start[1] += 100;
+        cartesian_end[1] += -100;
+      }
+
 
       ctx.beginPath();
 
-      let startX = marginX + portWidth * (coordinates[element.start][0] / maxX);
+      let startX = marginX + portWidth * (cartesian_start[0] / maxX);
 
       let startY =
         marginY +
         gridSizeY -
-        portHeight * (coordinates[element.start][1] / maxY);
+        portHeight * (cartesian_start[1] / maxY);
 
-      let endX = marginX + portWidth * (coordinates[element.end][0] / maxX);
+      let endX = marginX + portWidth * (cartesian_end[0] / maxX);
 
       let endY =
-        marginY + gridSizeY - portHeight * (coordinates[element.end][1] / maxY);
+        marginY + gridSizeY - portHeight * (cartesian_end[1] / maxY);
 
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
