@@ -427,20 +427,22 @@ function resultstoTextFile(data, totalTime) {
     .join("\n");
 
   let allowed = false;
-  if (
-    data["Config allowed"] === true &&
-    data["Within performance constraints"] === true
-  ) {
+
+  let configAllowed = data["Config allowed"];
+  console.log("Config allowed value:", configAllowed);
+  console.log("Config allowed type:", typeof configAllowed);
+  
+  if (configAllowed) {  // This will check for any truthy value
     allowed = true;
   }
-
+  
   window.resultsText = `Time taken: ${totalTime} secs\n`;
   if (allowed) {
     window.resultsText += "Floor config is within constraints\n";
   } else {
-    window.resultsText +=
-      "Floor config not allowed, try changing the parameters\n";
+    window.resultsText += "Floor config not allowed, try changing the parameters\n";
   }
+  
 
   window.resultsText += `Max End State Depth: ${data["Max end state depth"]} [mm]\n`;
   window.resultsText += `Total Volume: ${data["Total volume"].toFixed(
@@ -460,8 +462,7 @@ function displayResults(data, totalTime) {
 
   let allowed = false;
   if (
-    data["Config allowed"] === true &&
-    data["Within performance constraints"] === true
+    data["Config allowed"] === true
   ) {
     allowed = true;
   }
