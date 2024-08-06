@@ -336,6 +336,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 export function callAPI() {
   // const startTime = performance.now(); // Record start time
+  const calculateBtn = document.getElementById("calculate_btn");
+  const calculateSpinner = document.getElementById("calculate_spinner");
+
+  // Show the spinner and disable the button
+  calculateSpinner.classList.remove("hidden");
+  calculateBtn.disabled = true;
+  
 
   const x = document.getElementById("x").value;
   const y = document.getElementById("y").value;
@@ -353,7 +360,6 @@ export function callAPI() {
   const responses = JSON.parse(localStorage.getItem("apiResponses")) || [];
 
   function makeAPICall() {
-
     // instantiate a headers object
     var myHeaders = new Headers();
     // add content type header to object
@@ -430,6 +436,8 @@ export function callAPI() {
           // Check if terminal depth is reached
           if (responseData.terminal_depth === true) {
             terminalDepthReached = true;
+            calculateSpinner.classList.add("hidden");
+            calculateBtn.disabled = false;
           } else {
             targetDepth += 1;
             makeAPICall(); // Make the next API call
@@ -451,10 +459,14 @@ export function callAPI() {
       })
       .catch((error) => {
         console.log("Fetch error:", error);
-      });
-  }
-
-  makeAPICall(); // Initial call to start the process
+      })
+      // .finally(() => {
+        
+      // });;
+    }
+    
+    makeAPICall(); // Initial call to start the process
+    // Hide the spinner and enable the button
 }
 
 
