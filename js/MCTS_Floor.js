@@ -29,6 +29,7 @@ var dragEnd = { x: 0, y: 0 };
 var selectedNodes = [];
 var canvas = document.getElementById("MCTS_floor_canvas");
 var ctx = canvas.getContext("2d");
+let responseData = null;
 
 document.addEventListener("DOMContentLoaded", function () {
   const xSlider = document.getElementById("x");
@@ -38,7 +39,17 @@ document.addEventListener("DOMContentLoaded", function () {
   function handleDimensionChange() {
     // Reset loads data
     loadsData = [];
+    responseData = null
+    updateLoadsTextContainerDisplay(loadsData);
     // Redraw the grid or perform any other updates
+    // Clear the response cards before performing the API call
+    const cardContainer = document.getElementById("responseCardsContainer");
+    cardContainer.innerHTML = '';
+
+    let results_slider_tile = document.getElementById("results_slider_tile");
+    results_slider_tile.innerHTML = '';
+
+
     drawGrid();
   }
 
@@ -321,11 +332,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-let responseData = null;
 
-// callAPI function that takes the base and exponent numbers as parameters
+
 export function callAPI() {
-  const startTime = performance.now(); // Record start time
+  // const startTime = performance.now(); // Record start time
 
   const x = document.getElementById("x").value;
   const y = document.getElementById("y").value;
@@ -333,54 +343,125 @@ export function callAPI() {
   const maxRatio = document.getElementById("maxRatio").value;
   const maxDepth = document.getElementById("maxDepth").value;
 
-  // instantiate a headers object
-  var myHeaders = new Headers();
-  // add content type header to object
-  myHeaders.append("Content-Type", "application/json");
-  // using built in JSON utility package turn object to string and store in a variable
-  var raw = JSON.stringify({
-    x: x,
-    y: y,
-    loads: loadsData,
-    maxDeflection: maxDeflection,
-    maxRatio: maxRatio,
-    maxDepth: maxDepth,
-  });
+  localStorage.clear();
+  // Clear the response cards before performing the API call
+  const cardContainer = document.getElementById("responseCardsContainer");
+  cardContainer.innerHTML = '';
 
+  let targetDepth = 0;
+  let terminalDepthReached = false;
+  const responses = JSON.parse(localStorage.getItem("apiResponses")) || [];
 
-  // console.log(raw);
-  // create a JSON object with parameters for API call and store in a variable
-  var requestOptions = {
-    method: "POST",
-    headers: myHeaders,
-    body: raw,
-    redirect: "follow",
-  };
-  // make API call with parameters and use promises to get response
-  fetch(
-    "https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod",
-    requestOptions
-  )
-    .then((response) => response.text())
-    .then((data) => {
-      const initialResponseData = JSON.parse(data); // Parse the initial JSON string
-      responseData = JSON.parse(initialResponseData.body); // Parse the nested JSON string in 'body'
+  function makeAPICall() {
 
-      drawGrid();
+    // instantiate a headers object
+    var myHeaders = new Headers();
+    // add content type header to object
+    myHeaders.append("Content-Type", "application/json");
+    // using built in JSON utility package turn object to string and store in a variable
+    var raw = JSON.stringify({
+      x: x,
+      y: y,
+      loads: loadsData,
+      maxDeflection: maxDeflection,
+      maxRatio: maxRatio,
+      maxDepth: maxDepth,
+      targetDepth: targetDepth,
+    });
 
-      const endTime = performance.now(); // Record end time
-      let totalTime = (endTime - startTime) / 1000; // Calculate total time
-      totalTime = totalTime.toFixed(3); // Round to 2 decimal places
-      console.log(`API call took ${totalTime} seconds.`); // Print the time taken
+    // create a JSON object with parameters for API call and store in a variable
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
 
-      displayResults(responseData, totalTime);
-      displayResultsGrid(responseData, "basic");
-      resultstoTextFile(responseData, totalTime);
-    })
-    .catch((error) => console.log("error", error));
+    // make API call with parameters and use promises to get response
+    fetch("https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod", requestOptions)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+      })
+      .then((data) => {
+        try {
+          const initialResponseData = JSON.parse(data); // Parse the initial JSON string
+          responseData = JSON.parse(initialResponseData.body); // Parse the nested JSON string in 'body'
+
+          // Append the response to the responses array
+          responses.push(responseData);
+
+          // Store the responses in local storage
+          localStorage.setItem("apiResponses", JSON.stringify(responses));
+          
+          // Create a new card for the response
+          const card = document.createElement("button");
+          card.textContent = `Depth ${targetDepth}`;
+          card.dataset.index = responses.length - 1; // Store the index in the data attribute
+
+          if (responseData.state_basic) {
+            // Make the card clickable if responseData.state_basic exists
+            card.className = "btn bg-primary text-white hover:bg-blue-800";
+            card.addEventListener('click', () => {
+              const storedResponses = JSON.parse(localStorage.getItem("apiResponses"));
+              responseData = storedResponses[card.dataset.index]; // Update the global responseData variable
+              drawGrid();
+              displayResults(responseData);
+              // Get the selected render option
+              const selectedOption = document.querySelector('input[name="renderOption"]:checked').value;
+              displayResultsGrid(responseData, selectedOption); // Use the selected render option
+              resultstoTextFile(responseData);
+              console.log('Loaded responseData:', responseData);
+
+              // Highlight the clicked button
+              document.querySelectorAll('#responseCardsContainer .btn').forEach(btn => btn.classList.remove('bg-blue-800'));
+              card.classList.add('bg-blue-800');
+            });
+          } else {
+            // Make the card unclickable and greyed out if responseData.state_basic does not exist
+            card.className = "btn bg-gray-300 text-gray-600 cursor-not-allowed";
+            card.disabled = true;
+          }
+
+          cardContainer.appendChild(card);
+
+          // Check if terminal depth is reached
+          if (responseData.terminal_depth === true) {
+            terminalDepthReached = true;
+          } else {
+            targetDepth += 1;
+            makeAPICall(); // Make the next API call
+          }
+
+          if (responseData.state_basic) {
+            // Render the response
+            drawGrid();
+            console.log(`API call took ${responseData.time_taken} seconds.`); // Print the time taken
+            displayResults(responseData);
+            displayResultsGrid(responseData, "basic");
+            resultstoTextFile(responseData);
+          }
+
+        } catch (error) {
+          console.error("Error parsing response data:", error);
+          console.error("Data causing the error:", data);
+        }
+      })
+      .catch((error) => {
+        console.log("Fetch error:", error);
+      });
+  }
+
+  makeAPICall(); // Initial call to start the process
 }
 
-function resultstoTextFile(data, totalTime) {
+
+
+
+
+function resultstoTextFile(data) {
   // Function to pad strings to a specific length
   const padString = (str, length) => {
     return str.length < length ? str + " ".repeat(length - str.length) : str;
@@ -429,14 +510,12 @@ function resultstoTextFile(data, totalTime) {
   let allowed = false;
 
   let configAllowed = data["Config allowed"];
-  console.log("Config allowed value:", configAllowed);
-  console.log("Config allowed type:", typeof configAllowed);
   
   if (configAllowed) {  // This will check for any truthy value
     allowed = true;
   }
   
-  window.resultsText = `Time taken: ${totalTime} secs\n`;
+  window.resultsText = `Time taken: ${responseData.time_taken} secs\n`;
   if (allowed) {
     window.resultsText += "Floor config is within constraints\n";
   } else {
@@ -456,30 +535,30 @@ function resultstoTextFile(data, totalTime) {
   // Rest of the code...
 }
 
-function displayResults(data, totalTime) {
-  //  Results Slider Tile
+function displayResults(data) {
+
   let results_slider_tile = document.getElementById("results_slider_tile");
 
   let allowed = false;
-  if (
-    data["Config allowed"] === true
-  ) {
+  if (data["Config allowed"] === true) {
     allowed = true;
   }
 
   let color = allowed ? "green" : "red"; // Set color based on config allowed status
 
+  let totalVolume = data["Total volume"].toFixed(3); // Ensure the volume is always to 3 decimal places
+
   results_slider_tile.innerHTML = `
-    <h3>Results</h3>
-    <p>Time taken: ${totalTime} secs</p>
+    <h3>Total Volume: ${totalVolume} m3</h3>
+    <p>Time taken: ${responseData.time_taken} secs</p>
     <p style="color: ${color}; font-weight: bold">${
-    allowed
-      ? "Floor config is within constraints"
-      : "Floor config not allowed, try changing the parameters"
-  }</p>
+      allowed
+        ? "Floor config is within constraints"
+        : "Floor config not allowed, try changing the parameters"
+    }</p>
   `;
 
-  //   Results Legend
+  // Results Legend
   let results_legend = document.getElementById("results_legend");
 
   // Start with the title
@@ -509,8 +588,10 @@ function displayResults(data, totalTime) {
       let quantity = s.type === "beam" ? `${s.quantity}` : ` - `;
       let volume = s.volume.toFixed(3); // Display volume to 3 decimal places
       let displacement = s.max_displacement.toFixed(3); // Ensure displacement exists before calling toFixed
-
       let length = s.length;
+      let displacement_percent = displacement / (length / maxRatio.value) * 100
+      displacement_percent = displacement_percent.toFixed(3);
+
       let ratio = Math.round(s.min_displacement_ratio);
       let moment = s.max_moment / 10e6;
       moment = moment.toFixed(3);
@@ -523,19 +604,19 @@ function displayResults(data, totalTime) {
 
       return `
         <tr>
-          <td>${key}   </td>
-          <td>${s.size}   </td>
-          <td>${spacing}   </td>
-          <td>${quantity}   </td>
-          <td>${length}   </td>
-          <td>${volume}  </td>
-          <td>${displacement}</td>
-          <td>1 / ${ratio}</td>
-          <td>${moment}</td>
-          <td>${moment_percent}</td>
-          <td>${shear}</td>
-          <td>${shear_percent}</td>
-
+          <td class="px-4 py-2">${key}</td>
+          <td class="px-4 py-2">${s.size}</td>
+          <td class="px-4 py-2">${spacing}</td>
+          <td class="px-4 py-2">${quantity}</td>
+          <td class="px-4 py-2">${length}</td>
+          <td class="px-4 py-2">${volume}</td>
+          <td class="px-4 py-2">${displacement}</td>
+          <td class="px-4 py-2">${displacement_percent}</td>
+          <td class="px-4 py-2">1 / ${ratio}</td>
+          <td class="px-4 py-2">${moment}</td>
+          <td class="px-4 py-2">${moment_percent}</td>
+          <td class="px-4 py-2">${shear}</td>
+          <td class="px-4 py-2">${shear_percent}</td>
         </tr>
       `;
     })
@@ -546,37 +627,38 @@ function displayResults(data, totalTime) {
 
   // Construct the table with stateRows
   let resultsHTML = `
-    <table>
+    <h3 class="text-lg font-bold mb-4">Total Volume for option selected: ${totalVolume} m3</h3>
+    <table class="table-auto w-full border-collapse">
       <thead>
-        <tr>
-          <th>ID    </th>
-          <th>Size    </th>
-          <th>Spacing    </th>
-          <th>Qty     </th>
-          <th>Length   </th>
-          <th>Volume    </th>
-          <th>Displacement   </th>
-          <th>Ratio    </th>
-          <th>Moment    </th>
-          <th>Utilization    </th>
-          <th>Shear     </th>
-          <th>Utilization    </th>
-
+        <tr class="bg-gray-200">
+          <th class="px-4 py-2">ID</th>
+          <th class="px-4 py-2">Size</th>
+          <th class="px-4 py-2">Spacing</th>
+          <th class="px-4 py-2">Qty</th>
+          <th class="px-4 py-2">Length</th>
+          <th class="px-4 py-2">Volume</th>
+          <th class="px-4 py-2">Displacement</th>
+          <th class="px-4 py-2">Utilization</th>
+          <th class="px-4 py-2">Ratio</th>
+          <th class="px-4 py-2">Moment</th>
+          <th class="px-4 py-2">Utilization</th>
+          <th class="px-4 py-2">Shear</th>
+          <th class="px-4 py-2">Utilization</th>
         </tr>
         <tr>
-          <th>     </th>
-          <th>[mm] </th>
-          <th>[mm] </th>
-          <th>     </th>
-          <th>[mm] </th>
-          <th>[mm3]</th>
-          <th>[mm] </th>
-          <th>     </th>
-          <th>[kNm]</th>
-          <th>[%]</th>
-          <th>[kN] </th>
-          <th>[%]</th>
-
+          <th class="px-4 py-2"></th>
+          <th class="px-4 py-2">[mm]</th>
+          <th class="px-4 py-2">[mm]</th>
+          <th class="px-4 py-2"></th>
+          <th class="px-4 py-2">[mm]</th>
+          <th class="px-4 py-2">[m3]</th>
+          <th class="px-4 py-2">[mm]</th>
+          <th class="px-4 py-2">[%]</th>
+          <th class="px-4 py-2"></th>
+          <th class="px-4 py-2">[kNm]</th>
+          <th class="px-4 py-2">[%]</th>
+          <th class="px-4 py-2">[kN]</th>
+          <th class="px-4 py-2">[%]</th>
         </tr>
       </thead>
       <tbody>
@@ -588,6 +670,8 @@ function displayResults(data, totalTime) {
   // Set the innerHTML of the resultsDiv to the constructed resultsHTML
   resultsDiv.innerHTML = resultsHTML;
 }
+
+
 
 // Function to update slider value display
 function updateSliderValue(sliderId, displayId) {
