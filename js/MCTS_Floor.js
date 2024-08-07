@@ -175,8 +175,52 @@ function renderLoadsOnCanvas(loads) {
   });
 }
 
+// function highlightSelectedNodes() {
+//   var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
+
+//   ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Semi-transparent red for selected nodes area
+
+//   if (selectedNodes.length === 0) {
+//     console.log("No nodes selected");
+//     return;
+//   }
+
+//   selectedNodes.forEach((node) => {
+//     const nodeX = node[0];
+//     const nodeY = node[1];
+
+//     const screenX = marginX + nodeX * scaleX;
+//     const screenY = marginY + gridSizeY - nodeY * scaleY;
+
+//     const shadingWidth = 200*scaleX; // Adjust shading width as needed
+//     const shadingHeight = 200*scaleY; // Adjust shading height as needed
+
+//     ctx.fillRect(
+//       screenX - shadingWidth / 2,
+//       screenY - shadingHeight / 2,
+//       shadingWidth,
+//       shadingHeight
+//     );
+//   });
+
+//   // Determine the bounds of the selected nodes
+//   let minX = Math.min(...selectedNodes.map((node) => node[0]));
+//   let maxX = Math.max(...selectedNodes.map((node) => node[0]));
+//   let minY = Math.min(...selectedNodes.map((node) => node[1]));
+//   let maxY = Math.max(...selectedNodes.map((node) => node[1]));
+
+//   console.log(minX, maxX)
+//   // Assuming node coordinates are structured as [x, y]
+//   // Find the corners of the rectangle for the pressure area
+//   startNode = [minX, minY];
+//   endNode = [maxX, maxY];
+// }
+
 function highlightSelectedNodes() {
   var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
+
+  var xSlider = parseInt(document.getElementById("x").value);
+  var ySlider = parseInt(document.getElementById("y").value);
 
   ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Semi-transparent red for selected nodes area
 
@@ -187,30 +231,50 @@ function highlightSelectedNodes() {
 
   // Determine the bounds of the selected nodes
   let minX = Math.min(...selectedNodes.map((node) => node[0]));
-  let maxX = Math.max(...selectedNodes.map((node) => node[0]));
   let minY = Math.min(...selectedNodes.map((node) => node[1]));
+  let maxX = Math.max(...selectedNodes.map((node) => node[0]));
   let maxY = Math.max(...selectedNodes.map((node) => node[1]));
 
-  // Calculate rectangle dimensions
-  let rectWidth = (maxX - minX) * scaleX;
-  let rectHeight = (maxY - minY) * scaleY;
+  const screen_minX = marginX + minX * scaleX;
+  const screen_minY = marginY + gridSizeY - maxY * scaleY;
 
-  if (rectWidth === 0 || rectHeight === 0) {
-    console.log("Selected area forms a line or a point, not a rectangle");
-  } else {
-    // Draw a rectangle that covers all selected nodes
-    ctx.fillRect(
-      marginX + minX * scaleX,
-      marginY + gridSizeY - maxY * scaleY,
-      rectWidth,
-      rectHeight
-    );
+  const shadingWidth = 200 * scaleX; // Adjust shading width as needed
+  const shadingHeight = 200 * scaleY; // Adjust shading height as needed
 
-    // Assuming node coordinates are structured as [x, y]
-    // Find the corners of the rectangle for the pressure area
-    startNode = [minX, minY];
-    endNode = [maxX, maxY];
+  const selectedNodesWidth = (maxX - minX) * scaleX;
+  const selectedNodesHeight = (maxY - minY) * scaleY;
+
+  var adjust_minX = 0;
+  var adjust_height = 0;
+  var adjust_width = 0;
+  var adjust_minY = 0;
+
+  if (minX === 0) {
+    adjust_minX = shadingWidth / 2;
   }
+
+  if (minY === 0) {
+    adjust_height = -shadingWidth / 2;
+  }
+
+  if (maxX === xSlider) {
+    adjust_width = -shadingWidth / 2;
+  }
+
+  if (maxY === ySlider) {
+    adjust_minY = shadingWidth / 2;
+  }
+
+  // console.log(selectedNodesWidth, selectedNodesHeight)
+  ctx.fillRect(
+    screen_minX - shadingWidth / 2 + adjust_minX,
+    screen_minY - shadingHeight / 2 + adjust_minY,
+    selectedNodesWidth + shadingWidth + adjust_width,
+    selectedNodesHeight + shadingWidth + adjust_height
+  );
+
+  startNode = [minX, minY];
+  endNode = [maxX, maxY];
 }
 
 function selectNodesInRectangle() {
@@ -258,6 +322,18 @@ function getGridCoordinates() {
   return coordinates;
 }
 
+// Show the load modal
+function showLoadModal() {
+  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+  modal.showModal();
+}
+
+// close the load modal
+function closeLoadModal() {
+  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+  modal.close();
+}
+
 canvas.addEventListener("mousedown", function (e) {
   isDragging = true;
   dragStart.x = e.offsetX;
@@ -285,9 +361,6 @@ canvas.addEventListener("mouseup", function (e) {
   }
   isDragging = false; // Reset dragging flag
 });
-
-
-
 
 // ///////////////////////////////////////////////////////
 // ///////////////////////////////////////////////////////
@@ -344,12 +417,14 @@ updateSliderValue("maxRatio", "maxRatioValue");
 // ///////////////////////////////////////////////////////
 
 // When the loads accordion is open we want to render the loads
-document.getElementById("loadsAccordion").addEventListener("change", function () {
-  if (this.checked) {
-    drawGrid(); // Redraw the grid
-    renderLoadsOnCanvas(loadsData); // Update canvas rendering
-  }
-});
+document
+  .getElementById("loadsAccordion")
+  .addEventListener("change", function () {
+    if (this.checked) {
+      drawGrid(); // Redraw the grid
+      renderLoadsOnCanvas(loadsData); // Update canvas rendering
+    }
+  });
 
 // accepts the load input from the modal
 function acceptLoad() {
@@ -421,8 +496,8 @@ function deleteLoad(index) {
 
   // Optionally update the canvas if necessary
   renderLoadsOnCanvas(loadsData);
-  resetResponseCards()
-  resetResultSliderTile()
+  resetResponseCards();
+  resetResultSliderTile();
 }
 
 // event listener for the load modal
@@ -436,19 +511,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
   cancelBtn.addEventListener("click", closeLoadModal);
 });
 
-
-// Show the load modal
-function showLoadModal() {
-  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
-  modal.showLoadModal();
-}
-
-// close the load modal
-function closeLoadModal() {
-  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
-  modal.close();
-}
-
 // ///////////////////////////////////////////////////////
 //                     RESULTS
 // ///////////////////////////////////////////////////////
@@ -457,8 +519,7 @@ function closeLoadModal() {
 function resetResultSliderTile() {
   let results_slider_tile = document.getElementById("results_slider_tile");
   results_slider_tile.innerHTML = "";
- 
- }
+}
 // When the results accordion is open we want to render the config results
 document.addEventListener("DOMContentLoaded", function () {
   const resultsAccordion = document.getElementById("resultsAccordion");
@@ -472,7 +533,7 @@ document.addEventListener("DOMContentLoaded", function () {
       ).value;
       drawGrid();
       displayResultsGrid(responseData, selectedOption);
-    } 
+    }
   });
 
   // General event listener for all radio buttons
@@ -490,23 +551,25 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Creates the storage file in which to save the results
-document.getElementById("downloadBtn").addEventListener("click", function (event) {
-  event.preventDefault(); // Prevent the default action
+document
+  .getElementById("downloadBtn")
+  .addEventListener("click", function (event) {
+    event.preventDefault(); // Prevent the default action
 
-  if (!window.resultsText) {
-    alert("No results to download! Click 'Calculate' to generate results.");
-    return;
-  }
+    if (!window.resultsText) {
+      alert("No results to download! Click 'Calculate' to generate results.");
+      return;
+    }
 
-  var blob = new Blob([window.resultsText], { type: "text/plain" });
-  var downloadLink = document.createElement("a");
-  downloadLink.download = "results.txt";
-  downloadLink.href = window.URL.createObjectURL(blob);
-  downloadLink.style.display = "none";
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-});
+    var blob = new Blob([window.resultsText], { type: "text/plain" });
+    var downloadLink = document.createElement("a");
+    downloadLink.download = "results.txt";
+    downloadLink.href = window.URL.createObjectURL(blob);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  });
 
 // creates the text file with the results
 function resultstoTextFile(data) {
@@ -546,7 +609,6 @@ function resultstoTextFile(data) {
         ),
         padString(`${s.length}`, maxLengths.length),
         padString(`${s.volume.toFixed(3)}`, maxLengths.volume),
-
       ].join(" ");
     })
     .join("\n");
@@ -579,12 +641,18 @@ function resultstoTextFile(data) {
   window.resultsText += textRows; // Use the processed rows
 }
 
-// event listener for the calculate button
+// Event listener for the calculate button
 document.addEventListener("DOMContentLoaded", () => {
-const calculateButton = document.getElementById("calculate_btn");
-if (calculateButton) {
-  calculateButton.addEventListener("click", () => callAPI());
-}
+  const calculateButton = document.getElementById("calculate_btn");
+  if (calculateButton) {
+    calculateButton.addEventListener("click", () => {
+      if (loadsData.length > 0) {
+        callAPI();
+      } else {
+        alert("Please add loads before calculating.");
+      }
+    });
+  }
 });
 
 // Event listener for render options
@@ -600,7 +668,6 @@ document.querySelectorAll('input[name="renderOption"]').forEach((radio) => {
     }
   });
 });
-
 
 // Displays the responsedata in both the results tile and in the results table
 function displayResults(data) {
@@ -650,7 +717,7 @@ function displayResults(data) {
 
   // Generate stateRows HTML using the sorted entries
   let stateRows = sortedEntries
-  .map(([key, s]) => {
+    .map(([key, s]) => {
       let spacing = s.type === "joist" ? `${s.spacing}` : ` - `;
       let quantity = s.type === "beam" ? `${s.quantity}` : ` - `;
       let volume = s.volume.toFixed(3); // Display volume to 3 decimal places
@@ -739,7 +806,6 @@ function displayResults(data) {
   resultsDiv.innerHTML = resultsHTML;
 }
 
-
 // ///////////////////////////////////////////////////////
 // RESULTS CARDS
 // ///////////////////////////////////////////////////////
@@ -747,30 +813,23 @@ function displayResults(data) {
 // clear the response results config cards
 function resetResponseCards() {
   responseData = null;
- // Clear the response cards before performing the API call
- const cardContainer = document.getElementById("responseCardsContainer");
- cardContainer.innerHTML = "";
-
+  // Clear the response cards before performing the API call
+  const cardContainer = document.getElementById("responseCardsContainer");
+  cardContainer.innerHTML = "";
 }
 
-
-// RESET ALL 
+// RESET ALL
 // resets the config cards, the results card, and the results table
 function resetInputs() {
   // Reset loads data
   loadsData = [];
   updateLoadsTextContainerDisplay(loadsData);
   // Redraw the grid or perform any other updates
-  resetResponseCards()
-  resetResultSliderTile()
+  resetResponseCards();
+  resetResultSliderTile();
 
   drawGrid();
 }
-
-
-
-
-
 
 // ///////////////////////////////////////////////////////
 // ///////////////////////////////////////////////////////
@@ -795,7 +854,7 @@ export function callAPI() {
   localStorage.clear();
   // Clear the response cards before performing the API call
   const cardContainer = document.getElementById("responseCardsContainer");
-  cardContainer.innerHTML = '';
+  cardContainer.innerHTML = "";
 
   let targetDepth = 0;
   let terminalDepthReached = false;
@@ -826,7 +885,10 @@ export function callAPI() {
     };
 
     // make API call with parameters and use promises to get response
-    fetch("https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod", requestOptions)
+    fetch(
+      "https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod",
+      requestOptions
+    )
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -837,35 +899,46 @@ export function callAPI() {
         try {
           const initialResponseData = JSON.parse(data); // Parse the initial JSON string
           responseData = JSON.parse(initialResponseData.body); // Parse the nested JSON string in 'body'
-          console.log(responseData)
+          console.log(responseData);
           // Append the response to the responses array
           responses.push(responseData);
 
           // Store the responses in local storage
           localStorage.setItem("apiResponses", JSON.stringify(responses));
-          
-          
+
           if (responseData.state_basic) {
             // Create the card HTML structure using template literals
             const cardHtml = `
               <div class="flex flex-col items-center space-y-2 mb-2 p-2 border border-gray-300 rounded-md">
-                <label class="mb-1">State Length: ${Object.keys(responseData.state_basic).length}</label>
-                <input type="radio" aria-label="V: ${responseData["Total volume"].toFixed(3)}" name="responseCardRadio" class="btn bg-primary text-white w-full py-2 text-center cursor-pointer" data-index="${responses.length - 1}">
+                <label class="mb-1">State Length: ${
+                  Object.keys(responseData.state_basic).length
+                }</label>
+                <input type="radio" aria-label="V: ${responseData[
+                  "Total volume"
+                ].toFixed(
+                  3
+                )}" name="responseCardRadio" class="btn bg-primary text-white w-full py-2 text-center cursor-pointer" data-index="${
+              responses.length - 1
+            }">
               </div>
             `;
-            
-            const card = document.createElement('div');
+
+            const card = document.createElement("div");
             card.innerHTML = cardHtml;
             const radio = card.querySelector('input[type="radio"]');
             cardContainer.appendChild(card);
-  
+
             radio.addEventListener("click", () => {
-              const storedResponses = JSON.parse(localStorage.getItem("apiResponses"));
+              const storedResponses = JSON.parse(
+                localStorage.getItem("apiResponses")
+              );
               responseData = storedResponses[radio.dataset.index]; // Update the global responseData variable
               drawGrid();
               displayResults(responseData);
               // Get the selected render option
-              const selectedOption = document.querySelector('input[name="renderOption"]:checked').value;
+              const selectedOption = document.querySelector(
+                'input[name="renderOption"]:checked'
+              ).value;
               displayResultsGrid(responseData, selectedOption); // Use the selected render option
               resultstoTextFile(responseData);
               console.log("Loaded responseData:", responseData);
@@ -877,11 +950,10 @@ export function callAPI() {
                 <button class="btn" disabled="disabled">N/A</button>
               </div>
             `;
-            
-            const card = document.createElement('div');
+
+            const card = document.createElement("div");
             card.innerHTML = cardHtml;
             cardContainer.appendChild(card);
-
           }
 
           // Check if terminal depth is reached
@@ -902,7 +974,6 @@ export function callAPI() {
             displayResultsGrid(responseData, "basic");
             resultstoTextFile(responseData);
           }
-
         } catch (error) {
           console.error("Error parsing response data:", error);
           console.error("Data causing the error:", data);
@@ -915,11 +986,6 @@ export function callAPI() {
 
   makeAPICall(); // Initial call to start the process
 }
-
-
-
-
-
 
 // ///////////////////////////////////////////////////////
 // ///////////////////////////////////////////////////////
@@ -1158,7 +1224,6 @@ function annotateConfig(data) {
     ctx.fillText(labelText, labelX, labelY); // Draw text
   });
 }
-
 
 // Renders whenever a radio button has been changed
 document.querySelectorAll('input[name="renderOption"]').forEach((radio) => {
