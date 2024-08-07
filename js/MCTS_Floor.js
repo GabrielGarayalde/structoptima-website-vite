@@ -19,6 +19,10 @@ function setCanvasSize() {
 // Call this function on page load or whenever you need to adjust the canvas size
 setCanvasSize();
 
+// ///////////////////////////////////////////////////////
+//              SETTING THE VARIABLES
+// ///////////////////////////////////////////////////////
+
 // The functionality for dragging and selcting nodes on the grid
 var isDragging = false;
 let startNode = null;
@@ -31,101 +35,114 @@ var canvas = document.getElementById("MCTS_floor_canvas");
 var ctx = canvas.getContext("2d");
 let responseData = null;
 
-// Function to handle slider changes
-function resetInputs() {
-  // Reset loads data
-  loadsData = [];
-  responseData = null;
-  updateLoadsTextContainerDisplay(loadsData);
-  // Redraw the grid or perform any other updates
-  // Clear the response cards before performing the API call
-  const cardContainer = document.getElementById("responseCardsContainer");
-  cardContainer.innerHTML = "";
+// ///////////////////////////////////////////////////////
+// ----       UPDATING THE CANVAS w Loads           ----//
+// ///////////////////////////////////////////////////////
 
-  let results_slider_tile = document.getElementById("results_slider_tile");
-  results_slider_tile.innerHTML = "";
+// gridData
+// drawGrid
+// UpdateCanvas
+// renderLoadsOnCanvas
+// highlightSelectedNodes
+// selectNodesInRectangle
 
-  drawGrid();
+// important geometrical info about the canvas
+function gridData() {
+  let canvas = document.getElementById("MCTS_floor_canvas");
+
+  // Define maximum values for sliders
+  var maxX = document.getElementById("x").max;
+  var maxY = document.getElementById("y").max;
+
+  // Get the values of xSlider and ySlider
+  var xSlider = parseInt(document.getElementById("x").value);
+  var ySlider = parseInt(document.getElementById("y").value);
+
+  // Calculate margins as a fraction of the canvas dimensions
+  var marginX = canvas.width * 0.1;
+  var marginY = canvas.height * 0.1;
+
+  // Adjusted width and height for grid drawing
+  var portWidth = canvas.width - 2 * marginX;
+  var portHeight = canvas.height - 2 * marginY;
+
+  var scaleX = portWidth / maxX;
+  var scaleY = portHeight / maxY;
+
+  var gridSizeX = xSlider * scaleX;
+  var gridSizeY = ySlider * scaleY;
+
+  return {
+    marginX,
+    marginY,
+    portWidth,
+    portHeight,
+    scaleX,
+    scaleY,
+    gridSizeX,
+    gridSizeY,
+    maxX,
+    maxY,
+  };
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  const xSlider = document.getElementById("x");
-  const ySlider = document.getElementById("y");
+function drawGrid() {
+  var canvas = document.getElementById("MCTS_floor_canvas");
+  var ctx = canvas.getContext("2d");
 
-  // Attach the event listeners
-  xSlider.addEventListener("input", resetInputs);
-  ySlider.addEventListener("input", resetInputs);
-});
+  // Clear the canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-canvas.addEventListener("mousedown", function (e) {
-  isDragging = true;
-  dragStart.x = e.offsetX;
-  dragStart.y = e.offsetY;
-  dragEnd.x = e.offsetX;
-  dragEnd.y = e.offsetY;
-  selectedNodes = []; // Clear previous selections
-  updateCanvas();
-});
+  // Retrieve grid coordinates
+  let coordinates = getGridCoordinates(); // Assuming this returns an array of [x, y] pairs
 
-canvas.addEventListener("mousemove", function (e) {
-  if (isDragging) {
-    dragEnd.x = e.offsetX;
-    dragEnd.y = e.offsetY;
-    selectNodesInRectangle();
-    updateCanvas();
-  }
-});
+  // Retrieve slider values for X and Y
+  var x = parseInt(document.getElementById("x").value);
+  var y = parseInt(document.getElementById("y").value);
 
-canvas.addEventListener("mouseup", function (e) {
-  selectNodesInRectangle();
-  if (isDragging && selectedNodes.length > 0) {
-    updateCanvas(); // Update canvas if needed
-    showModal(); // Show the modal only if nodes have been selected
-  }
-  isDragging = false; // Reset dragging flag
-});
+  var maxY = document.getElementById("y").max;
+  var maxX = document.getElementById("x").max;
 
-document
-  .getElementById("loadsAccordion")
-  .addEventListener("change", function () {
-    if (this.checked) {
-      console.log("Loads accordion is now open.");
-      drawGrid(); // Redraw the grid
-      renderLoadsOnCanvas(loadsData); // Update canvas rendering
-    }
+  // Calculate margins as a fraction of the canvas dimensions
+  var marginX = canvas.width * 0.1;
+  var marginY = canvas.height * 0.1; // - (yMax * scale); // Adjust vertical margin based on yMax
+
+  // Ensure marginY is not less than a minimum margin to keep the grid visible
+  marginY = Math.max(marginY, 20); // Ensure there's at least a 20px margin at the top
+
+  var portHeight = canvas.height - 2 * marginY;
+  var portWidth = canvas.width - 2 * marginX;
+
+  var scaleY = portHeight / maxY;
+  var scaleX = portWidth / maxX;
+
+  var gridSizeX = x * scaleX;
+  var gridSizeY = y * scaleY;
+
+  // Set fill color to grey
+  ctx.fillStyle = "rgb(100,100,100)";
+
+  // Draw points for each coordinate, adjusting for the margin
+  coordinates.forEach(([x, y]) => {
+    ctx.beginPath();
+    ctx.arc(
+      marginX + x * scaleX, // Use constant scale for X
+      marginY + gridSizeY - y * scaleY, // Adjust Y-coordinate calculation
+      1, // Radius of the circle to draw
+      0, // Start angle
+      2 * Math.PI // End angle
+    );
+    ctx.fill();
   });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const resultsAccordion = document.getElementById("resultsAccordion");
-  const radioButtons = document.querySelectorAll('input[name="renderOption"]');
+  // Draw a black rectangle around the grid
+  ctx.strokeStyle = "black"; // Set stroke color to black
+  ctx.lineWidth = 2; // Set line width
+  ctx.strokeRect(marginX, marginY, gridSizeX, gridSizeY);
+}
 
-  // Event listener for the accordion to just redraw or refresh data
-  resultsAccordion.addEventListener("change", function () {
-    if (this.checked && responseData !== null) {
-      console.log("Results accordion is now open.");
-      const selectedOption = document.querySelector(
-        'input[name="renderOption"]:checked'
-      ).value;
-      drawGrid();
-      displayResultsGrid(responseData, selectedOption);
-    } else {
-      console.log("Data is not available or accordion is not open.");
-    }
-  });
-
-  // General event listener for all radio buttons
-  radioButtons.forEach((radio) => {
-    radio.addEventListener("change", (event) => {
-      if (responseData !== null) {
-        console.log("Radio option changed:", event.target.value);
-        drawGrid();
-        displayResultsGrid(responseData, event.target.value);
-      } else {
-        console.log("Data is not available yet.");
-      }
-    });
-  });
-});
+// Initialize the canvas grid
+drawGrid();
 
 function updateCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas first
@@ -155,28 +172,6 @@ function renderLoadsOnCanvas(loads) {
     ctx.font = "16px Arial";
     ctx.textAlign = "center";
     ctx.fillText(`Pressure ${index + 1}`, x + width / 2, y + height / 2);
-  });
-}
-
-function selectNodesInRectangle() {
-  var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
-
-  const startX = Math.min(dragStart.x, dragEnd.x);
-  const endX = Math.max(dragStart.x, dragEnd.x);
-  const startY = Math.min(dragStart.y, dragEnd.y);
-  const endY = Math.max(dragStart.y, dragEnd.y);
-
-  let coordinates = getGridCoordinates(); // Assuming this returns an array of [x, y] pairs
-
-  selectedNodes = coordinates.filter(([x, y]) => {
-    let screenX = marginX + x * scaleX;
-    let screenY = marginY + gridSizeY - y * scaleY;
-    return (
-      screenX >= startX &&
-      screenX <= endX &&
-      screenY >= startY &&
-      screenY <= endY
-    );
   });
 }
 
@@ -218,26 +213,145 @@ function highlightSelectedNodes() {
   }
 }
 
-function showModal() {
-  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
-  modal.showModal();
+function selectNodesInRectangle() {
+  var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
+
+  const startX = Math.min(dragStart.x, dragEnd.x);
+  const endX = Math.max(dragStart.x, dragEnd.x);
+  const startY = Math.min(dragStart.y, dragEnd.y);
+  const endY = Math.max(dragStart.y, dragEnd.y);
+
+  let coordinates = getGridCoordinates(); // Assuming this returns an array of [x, y] pairs
+
+  selectedNodes = coordinates.filter(([x, y]) => {
+    let screenX = marginX + x * scaleX;
+    let screenY = marginY + gridSizeY - y * scaleY;
+    return (
+      screenX >= startX &&
+      screenX <= endX &&
+      screenY >= startY &&
+      screenY <= endY
+    );
+  });
 }
 
-function closeModal() {
-  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
-  modal.close();
+function getGridCoordinates() {
+  var xSliderValue = parseInt(document.getElementById("x").value);
+  var ySliderValue = parseInt(document.getElementById("y").value);
+
+  var spacingX = 200; // Spacing between points in x direction
+  var spacingY = 200; // Spacing between points in y direction
+
+  var numOfPointsX = xSliderValue / 200 + 1; // Number of points in x direction
+  var numOfPointsY = ySliderValue / 200 + 1; // Number of points in y direction
+
+  var coordinates = [];
+
+  for (var i = 0; i < numOfPointsY; i++) {
+    for (var j = 0; j < numOfPointsX; j++) {
+      var xCoord = j * spacingX;
+      var yCoord = i * spacingY;
+      coordinates.push([xCoord, yCoord]);
+    }
+  }
+
+  return coordinates;
 }
 
-document.addEventListener("DOMContentLoaded", (event) => {
-  // Listener for the accept button
-  const acceptBtn = document.getElementById("acceptButton");
-  acceptBtn.addEventListener("click", acceptLoad);
-
-  // Listener for the cancel button
-  const cancelBtn = document.getElementById("cancelButton");
-  cancelBtn.addEventListener("click", closeModal);
+canvas.addEventListener("mousedown", function (e) {
+  isDragging = true;
+  dragStart.x = e.offsetX;
+  dragStart.y = e.offsetY;
+  dragEnd.x = e.offsetX;
+  dragEnd.y = e.offsetY;
+  selectedNodes = []; // Clear previous selections
+  updateCanvas();
 });
 
+canvas.addEventListener("mousemove", function (e) {
+  if (isDragging) {
+    dragEnd.x = e.offsetX;
+    dragEnd.y = e.offsetY;
+    selectNodesInRectangle();
+    updateCanvas();
+  }
+});
+
+canvas.addEventListener("mouseup", function (e) {
+  selectNodesInRectangle();
+  if (isDragging && selectedNodes.length > 0) {
+    updateCanvas(); // Update canvas if needed
+    showLoadModal(); // Show the modal only if nodes have been selected
+  }
+  isDragging = false; // Reset dragging flag
+});
+
+
+
+
+// ///////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
+// DIMENSIONS, CONSTRAINTS, LOADS, RESULTS, RESULTS CARDS
+// ///////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
+
+// ///////////////////////////////////////////////////////
+//                     DIMENSIONS
+// ///////////////////////////////////////////////////////
+
+// Event listener for when the dimension sliders are changed
+document.addEventListener("DOMContentLoaded", function () {
+  const xSlider = document.getElementById("x");
+  const ySlider = document.getElementById("y");
+
+  // Attach the event listeners
+  xSlider.addEventListener("input", resetInputs);
+  ySlider.addEventListener("input", resetInputs);
+});
+
+// Function to update slider value display
+function updateSliderValue(sliderId, displayId) {
+  var slider = document.getElementById(sliderId);
+  var display = document.getElementById(displayId);
+  // if the sliderId is pressureLoad, then the display value is multiplied by 1000
+  if (sliderId === "pressureLoad") {
+    display.textContent = slider.value * 1000;
+  } else {
+    display.textContent = slider.value;
+  }
+
+  // Add event listener to update the display when the slider value changes
+  slider.addEventListener("input", function () {
+    if (sliderId === "pressureLoad") {
+      display.textContent = slider.value * 1000;
+    } else {
+      display.textContent = slider.value;
+    }
+
+    drawGrid();
+  });
+}
+
+// Call this function for each slider with its corresponding display element
+updateSliderValue("x", "xValue");
+updateSliderValue("y", "yValue");
+updateSliderValue("maxDeflection", "maxDeflectionValue");
+updateSliderValue("maxDepth", "maxDepthValue");
+updateSliderValue("maxRatio", "maxRatioValue");
+
+// ///////////////////////////////////////////////////////
+//                       LOADS
+// ///////////////////////////////////////////////////////
+
+// When the loads accordion is open we want to render the loads
+document.getElementById("loadsAccordion").addEventListener("change", function () {
+  if (this.checked) {
+    drawGrid(); // Redraw the grid
+    renderLoadsOnCanvas(loadsData); // Update canvas rendering
+  }
+});
+
+// accepts the load input from the modal
 function acceptLoad() {
   const loadG = document.getElementById("loadInput1").value / 1000;
   const loadQ = document.getElementById("loadInput2").value / 1000;
@@ -255,13 +369,14 @@ function acceptLoad() {
   loadsData.push(newLoad);
   // console.log(loadsData);
   // Update the UI or further process the data
-  updateLoadsTextContainerDisplay(loadsData); // Assumes there's a function to update UI
+  updateLoadsTextContainerDisplay(); // Assumes there's a function to update UI
   drawGrid();
   renderLoadsOnCanvas(loadsData); // Update canvas rendering
-  closeModal(); // Close modal after accepting
+  closeLoadModal(); // Close modal after accepting
 }
 
-function updateLoadsTextContainerDisplay(loadsData) {
+// this renders the load in the loads card
+function updateLoadsTextContainerDisplay() {
   const loadsContainer = document.getElementById("loads-values-container");
   // Clear the existing contents of the container
   loadsContainer.innerHTML = "";
@@ -278,19 +393,20 @@ function updateLoadsTextContainerDisplay(loadsData) {
           <div class="text-center">${load.G * 1000} kPa</div>
           <div class="text-center">${load.Q * 1000} kPa</div>
           <div class="text-center">
-              <button class="btn btn-error" id="deleteBtn-${index}">Delete</button>
+              <button class="btn btn-error deleteBtn" data-index="${index}">Delete</button>
           </div>
       `;
 
     loadsContainer.appendChild(newRow);
+  });
 
-    // Add event listener to the delete button
-    document
-      .getElementById(`deleteBtn-${index}`)
-      .addEventListener("click", function () {
-        deleteLoad(index);
-        resetInputs()
-      });
+  // Add event listeners to all delete buttons after all rows are created
+  document.querySelectorAll(".deleteBtn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const index = parseInt(this.getAttribute("data-index"));
+      deleteLoad(index);
+      // resetInputs();
+    });
   });
 }
 
@@ -298,184 +414,101 @@ function updateLoadsTextContainerDisplay(loadsData) {
 function deleteLoad(index) {
   // Remove the load from the array
   loadsData.splice(index, 1);
-  drawGrid(); // Redraw the grid
 
   // Update the UI
-  updateLoadsTextContainerDisplay(loadsData);
+  updateLoadsTextContainerDisplay();
+  drawGrid(); // Redraw the grid
+
   // Optionally update the canvas if necessary
   renderLoadsOnCanvas(loadsData);
+  resetResponseCards()
+  resetResultSliderTile()
 }
 
-// Save the results to a file
-document
-  .getElementById("downloadBtn")
-  .addEventListener("click", function (event) {
-    event.preventDefault(); // Prevent the default action
+// event listener for the load modal
+document.addEventListener("DOMContentLoaded", (event) => {
+  // Listener for the accept button
+  const acceptBtn = document.getElementById("acceptButton");
+  acceptBtn.addEventListener("click", acceptLoad);
 
-    if (!window.resultsText) {
-      alert("No results to download! Click 'Calculate' to generate results.");
-      return;
-    }
-
-    var blob = new Blob([window.resultsText], { type: "text/plain" });
-    var downloadLink = document.createElement("a");
-    downloadLink.download = "results.txt";
-    downloadLink.href = window.URL.createObjectURL(blob);
-    downloadLink.style.display = "none";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-  });
-
-document.addEventListener("DOMContentLoaded", () => {
-  const calculateButton = document.getElementById("calculate_btn");
-  if (calculateButton) {
-    calculateButton.addEventListener("click", () => callAPI());
-  }
+  // Listener for the cancel button
+  const cancelBtn = document.getElementById("cancelButton");
+  cancelBtn.addEventListener("click", closeLoadModal);
 });
 
-export function callAPI() {
-  // const startTime = performance.now(); // Record start time
-  const calculateBtn = document.getElementById("calculate_btn");
-  const calculateSpinner = document.getElementById("calculate_spinner");
 
-  // Show the spinner and disable the button
-  calculateSpinner.classList.remove("hidden");
-  calculateBtn.disabled = true;
-
-  const x = document.getElementById("x").value;
-  const y = document.getElementById("y").value;
-  const maxDeflection = document.getElementById("maxDeflection").value;
-  const maxRatio = document.getElementById("maxRatio").value;
-  const maxDepth = document.getElementById("maxDepth").value;
-
-  localStorage.clear();
-  // Clear the response cards before performing the API call
-  const cardContainer = document.getElementById("responseCardsContainer");
-  cardContainer.innerHTML = "";
-
-  let targetDepth = 0;
-  let terminalDepthReached = false;
-  const responses = JSON.parse(localStorage.getItem("apiResponses")) || [];
-
-  function makeAPICall() {
-    // instantiate a headers object
-    var myHeaders = new Headers();
-    // add content type header to object
-    myHeaders.append("Content-Type", "application/json");
-    // using built in JSON utility package turn object to string and store in a variable
-    var raw = JSON.stringify({
-      x: x,
-      y: y,
-      loads: loadsData,
-      maxDeflection: maxDeflection,
-      maxRatio: maxRatio,
-      maxDepth: maxDepth,
-      targetDepth: targetDepth,
-    });
-
-    // create a JSON object with parameters for API call and store in a variable
-    var requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow",
-    };
-
-    // make API call with parameters and use promises to get response
-    fetch(
-      "https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod",
-      requestOptions
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.text();
-      })
-      .then((data) => {
-        try {
-          const initialResponseData = JSON.parse(data); // Parse the initial JSON string
-          responseData = JSON.parse(initialResponseData.body); // Parse the nested JSON string in 'body'
-
-          // Append the response to the responses array
-          responses.push(responseData);
-
-          // Store the responses in local storage
-          localStorage.setItem("apiResponses", JSON.stringify(responses));
-
-          // Create a new card for the response
-          const card = document.createElement("button");
-          card.textContent = `Depth ${targetDepth}`;
-          card.dataset.index = responses.length - 1; // Store the index in the data attribute
-
-          if (responseData.state_basic) {
-            // Make the card clickable if responseData.state_basic exists
-            card.className = "btn bg-primary text-white hover:bg-blue-800";
-            card.addEventListener("click", () => {
-              const storedResponses = JSON.parse(
-                localStorage.getItem("apiResponses")
-              );
-              responseData = storedResponses[card.dataset.index]; // Update the global responseData variable
-              drawGrid();
-              displayResults(responseData);
-              // Get the selected render option
-              const selectedOption = document.querySelector(
-                'input[name="renderOption"]:checked'
-              ).value;
-              displayResultsGrid(responseData, selectedOption); // Use the selected render option
-              resultstoTextFile(responseData);
-              console.log("Loaded responseData:", responseData);
-
-              // Highlight the clicked button
-              document
-                .querySelectorAll("#responseCardsContainer .btn")
-                .forEach((btn) => btn.classList.remove("bg-blue-800"));
-              card.classList.add("bg-blue-800");
-            });
-          } else {
-            // Make the card unclickable and greyed out if responseData.state_basic does not exist
-            card.className = "btn bg-gray-300 text-gray-600 cursor-not-allowed";
-            card.disabled = true;
-          }
-
-          cardContainer.appendChild(card);
-
-          // Check if terminal depth is reached
-          if (responseData.terminal_depth === true) {
-            terminalDepthReached = true;
-            calculateSpinner.classList.add("hidden");
-            calculateBtn.disabled = false;
-          } else {
-            targetDepth += 1;
-            makeAPICall(); // Make the next API call
-          }
-
-          if (responseData.state_basic) {
-            // Render the response
-            drawGrid();
-            console.log(`API call took ${responseData.time_taken} seconds.`); // Print the time taken
-            displayResults(responseData);
-            displayResultsGrid(responseData, "basic");
-            resultstoTextFile(responseData);
-          }
-        } catch (error) {
-          console.error("Error parsing response data:", error);
-          console.error("Data causing the error:", data);
-        }
-      })
-      .catch((error) => {
-        console.log("Fetch error:", error);
-      });
-    // .finally(() => {
-
-    // });;
-  }
-
-  makeAPICall(); // Initial call to start the process
-  // Hide the spinner and enable the button
+// Show the load modal
+function showLoadModal() {
+  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+  modal.showLoadModal();
 }
 
+// close the load modal
+function closeLoadModal() {
+  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+  modal.close();
+}
+
+// ///////////////////////////////////////////////////////
+//                     RESULTS
+// ///////////////////////////////////////////////////////
+
+// clear the results cards
+function resetResultSliderTile() {
+  let results_slider_tile = document.getElementById("results_slider_tile");
+  results_slider_tile.innerHTML = "";
+ 
+ }
+// When the results accordion is open we want to render the config results
+document.addEventListener("DOMContentLoaded", function () {
+  const resultsAccordion = document.getElementById("resultsAccordion");
+  const radioButtons = document.querySelectorAll('input[name="renderOption"]');
+
+  // Event listener for the accordion to just redraw or refresh data
+  resultsAccordion.addEventListener("change", function () {
+    if (this.checked && responseData !== null) {
+      const selectedOption = document.querySelector(
+        'input[name="renderOption"]:checked'
+      ).value;
+      drawGrid();
+      displayResultsGrid(responseData, selectedOption);
+    } 
+  });
+
+  // General event listener for all radio buttons
+  radioButtons.forEach((radio) => {
+    radio.addEventListener("change", (event) => {
+      if (responseData !== null) {
+        console.log("Radio option changed:", event.target.value);
+        drawGrid();
+        displayResultsGrid(responseData, event.target.value);
+      } else {
+        console.log("Data is not available yet.");
+      }
+    });
+  });
+});
+
+// Creates the storage file in which to save the results
+document.getElementById("downloadBtn").addEventListener("click", function (event) {
+  event.preventDefault(); // Prevent the default action
+
+  if (!window.resultsText) {
+    alert("No results to download! Click 'Calculate' to generate results.");
+    return;
+  }
+
+  var blob = new Blob([window.resultsText], { type: "text/plain" });
+  var downloadLink = document.createElement("a");
+  downloadLink.download = "results.txt";
+  downloadLink.href = window.URL.createObjectURL(blob);
+  downloadLink.style.display = "none";
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+});
+
+// creates the text file with the results
 function resultstoTextFile(data) {
   // Function to pad strings to a specific length
   const padString = (str, length) => {
@@ -513,11 +546,7 @@ function resultstoTextFile(data) {
         ),
         padString(`${s.length}`, maxLengths.length),
         padString(`${s.volume.toFixed(3)}`, maxLengths.volume),
-        // padString(`${s.displacement.toFixed(3)}`, maxLengths.displacement),
-        // padString(
-        //   `1/${Math.round(s.length / s.displacement)}`,
-        //   maxLengths.ratio
-        // ),
+
       ].join(" ");
     })
     .join("\n");
@@ -548,9 +577,32 @@ function resultstoTextFile(data) {
   window.resultsText +=
     "Type      Key       Size      Spacing   Quantity  Length    Volume    Disp.     Ratio\n";
   window.resultsText += textRows; // Use the processed rows
-  // Rest of the code...
 }
 
+// event listener for the calculate button
+document.addEventListener("DOMContentLoaded", () => {
+const calculateButton = document.getElementById("calculate_btn");
+if (calculateButton) {
+  calculateButton.addEventListener("click", () => callAPI());
+}
+});
+
+// Event listener for render options
+document.querySelectorAll('input[name="renderOption"]').forEach((radio) => {
+  radio.addEventListener("change", (event) => {
+    console.log(responseData);
+    if (responseData !== null) {
+      // Check if responseData has been set
+      const selectedOption = event.target.value;
+      displayResultsGrid(responseData, selectedOption); // Use responseData here
+    } else {
+      console.log("Data is not available yet.");
+    }
+  });
+});
+
+
+// Displays the responsedata in both the results tile and in the results table
 function displayResults(data) {
   let results_slider_tile = document.getElementById("results_slider_tile");
 
@@ -596,9 +648,9 @@ function displayResults(data) {
   // Set the innerHTML of the legend div to the generated content
   results_legend.innerHTML = legendContent;
 
-  // Generate stateRows HTML as provided
-  let stateRows = Object.entries(data.state_basic)
-    .map(([key, s]) => {
+  // Generate stateRows HTML using the sorted entries
+  let stateRows = sortedEntries
+  .map(([key, s]) => {
       let spacing = s.type === "joist" ? `${s.spacing}` : ` - `;
       let quantity = s.type === "beam" ? `${s.quantity}` : ` - `;
       let volume = s.volume.toFixed(3); // Display volume to 3 decimal places
@@ -687,117 +739,193 @@ function displayResults(data) {
   resultsDiv.innerHTML = resultsHTML;
 }
 
-// Function to update slider value display
-function updateSliderValue(sliderId, displayId) {
-  var slider = document.getElementById(sliderId);
-  var display = document.getElementById(displayId);
-  // if the sliderId is pressureLoad, then the display value is multiplied by 1000
-  if (sliderId === "pressureLoad") {
-    display.textContent = slider.value * 1000;
-  } else {
-    display.textContent = slider.value;
+
+// ///////////////////////////////////////////////////////
+// RESULTS CARDS
+// ///////////////////////////////////////////////////////
+
+// clear the response results config cards
+function resetResponseCards() {
+  responseData = null;
+ // Clear the response cards before performing the API call
+ const cardContainer = document.getElementById("responseCardsContainer");
+ cardContainer.innerHTML = "";
+
+}
+
+
+// RESET ALL 
+// resets the config cards, the results card, and the results table
+function resetInputs() {
+  // Reset loads data
+  loadsData = [];
+  updateLoadsTextContainerDisplay(loadsData);
+  // Redraw the grid or perform any other updates
+  resetResponseCards()
+  resetResultSliderTile()
+
+  drawGrid();
+}
+
+
+
+
+
+
+// ///////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
+//                      API CALL
+// ///////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
+export function callAPI() {
+  const calculateBtn = document.getElementById("calculate_btn");
+  const calculateSpinner = document.getElementById("calculate_spinner");
+
+  // Show the spinner and disable the button
+  console.log("Showing spinner and disabling button");
+  calculateSpinner.classList.remove("hidden");
+  calculateBtn.disabled = true;
+
+  const x = document.getElementById("x").value;
+  const y = document.getElementById("y").value;
+  const maxDeflection = document.getElementById("maxDeflection").value;
+  const maxRatio = document.getElementById("maxRatio").value;
+  const maxDepth = document.getElementById("maxDepth").value;
+
+  localStorage.clear();
+  // Clear the response cards before performing the API call
+  const cardContainer = document.getElementById("responseCardsContainer");
+  cardContainer.innerHTML = '';
+
+  let targetDepth = 0;
+  let terminalDepthReached = false;
+  const responses = JSON.parse(localStorage.getItem("apiResponses")) || [];
+
+  function makeAPICall() {
+    // instantiate a headers object
+    var myHeaders = new Headers();
+    // add content type header to object
+    myHeaders.append("Content-Type", "application/json");
+    // using built in JSON utility package turn object to string and store in a variable
+    var raw = JSON.stringify({
+      x: x,
+      y: y,
+      loads: loadsData,
+      maxDeflection: maxDeflection,
+      maxRatio: maxRatio,
+      maxDepth: maxDepth,
+      targetDepth: targetDepth,
+    });
+
+    // create a JSON object with parameters for API call and store in a variable
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+
+    // make API call with parameters and use promises to get response
+    fetch("https://gg10w11xt0.execute-api.eu-north-1.amazonaws.com/prod", requestOptions)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.text();
+      })
+      .then((data) => {
+        try {
+          const initialResponseData = JSON.parse(data); // Parse the initial JSON string
+          responseData = JSON.parse(initialResponseData.body); // Parse the nested JSON string in 'body'
+          console.log(responseData)
+          // Append the response to the responses array
+          responses.push(responseData);
+
+          // Store the responses in local storage
+          localStorage.setItem("apiResponses", JSON.stringify(responses));
+          
+          
+          if (responseData.state_basic) {
+            // Create the card HTML structure using template literals
+            const cardHtml = `
+              <div class="flex flex-col items-center space-y-2 mb-2 p-2 border border-gray-300 rounded-md">
+                <label class="mb-1">State Length: ${Object.keys(responseData.state_basic).length}</label>
+                <input type="radio" aria-label="V: ${responseData["Total volume"].toFixed(3)}" name="responseCardRadio" class="btn bg-primary text-white w-full py-2 text-center cursor-pointer" data-index="${responses.length - 1}">
+              </div>
+            `;
+            
+            const card = document.createElement('div');
+            card.innerHTML = cardHtml;
+            const radio = card.querySelector('input[type="radio"]');
+            cardContainer.appendChild(card);
+  
+            radio.addEventListener("click", () => {
+              const storedResponses = JSON.parse(localStorage.getItem("apiResponses"));
+              responseData = storedResponses[radio.dataset.index]; // Update the global responseData variable
+              drawGrid();
+              displayResults(responseData);
+              // Get the selected render option
+              const selectedOption = document.querySelector('input[name="renderOption"]:checked').value;
+              displayResultsGrid(responseData, selectedOption); // Use the selected render option
+              resultstoTextFile(responseData);
+              console.log("Loaded responseData:", responseData);
+            });
+          } else {
+            const cardHtml = `
+              <div class="flex flex-col items-center space-y-2 mb-2 p-2 border border-gray-300 rounded-md">
+                <label class="mb-1">No state found</label>
+                <button class="btn" disabled="disabled">N/A</button>
+              </div>
+            `;
+            
+            const card = document.createElement('div');
+            card.innerHTML = cardHtml;
+            cardContainer.appendChild(card);
+
+          }
+
+          // Check if terminal depth is reached
+          if (responseData.terminal_depth === true) {
+            terminalDepthReached = true;
+            calculateSpinner.classList.add("hidden");
+            calculateBtn.disabled = false;
+          } else {
+            targetDepth += 1;
+            makeAPICall(); // Make the next API call
+          }
+
+          if (responseData.state_basic) {
+            // Render the response
+            drawGrid();
+            console.log(`API call took ${responseData.time_taken} seconds.`); // Print the time taken
+            displayResults(responseData);
+            displayResultsGrid(responseData, "basic");
+            resultstoTextFile(responseData);
+          }
+
+        } catch (error) {
+          console.error("Error parsing response data:", error);
+          console.error("Data causing the error:", data);
+        }
+      })
+      .catch((error) => {
+        console.log("Fetch error:", error);
+      });
   }
 
-  // Add event listener to update the display when the slider value changes
-  slider.addEventListener("input", function () {
-    if (sliderId === "pressureLoad") {
-      display.textContent = slider.value * 1000;
-    } else {
-      display.textContent = slider.value;
-    }
-
-    drawGrid();
-  });
+  makeAPICall(); // Initial call to start the process
 }
 
-function drawGrid() {
-  var canvas = document.getElementById("MCTS_floor_canvas");
-  var ctx = canvas.getContext("2d");
 
-  // Clear the canvas
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Retrieve grid coordinates
-  let coordinates = getGridCoordinates(); // Assuming this returns an array of [x, y] pairs
 
-  // Retrieve slider values for X and Y
-  var x = parseInt(document.getElementById("x").value);
-  var y = parseInt(document.getElementById("y").value);
 
-  var maxY = document.getElementById("y").max;
-  var maxX = document.getElementById("x").max;
 
-  // Calculate margins as a fraction of the canvas dimensions
-  var marginX = canvas.width * 0.1;
-  var marginY = canvas.height * 0.1; // - (yMax * scale); // Adjust vertical margin based on yMax
-
-  // Ensure marginY is not less than a minimum margin to keep the grid visible
-  marginY = Math.max(marginY, 20); // Ensure there's at least a 20px margin at the top
-
-  var portHeight = canvas.height - 2 * marginY;
-  var portWidth = canvas.width - 2 * marginX;
-
-  var scaleY = portHeight / maxY;
-  var scaleX = portWidth / maxX;
-
-  var gridSizeX = x * scaleX;
-  var gridSizeY = y * scaleY;
-
-  // Set fill color to grey
-  ctx.fillStyle = "rgb(100,100,100)";
-
-  // Draw points for each coordinate, adjusting for the margin
-  coordinates.forEach(([x, y]) => {
-    ctx.beginPath();
-    ctx.arc(
-      marginX + x * scaleX, // Use constant scale for X
-      marginY + gridSizeY - y * scaleY, // Adjust Y-coordinate calculation
-      1, // Radius of the circle to draw
-      0, // Start angle
-      2 * Math.PI // End angle
-    );
-    ctx.fill();
-  });
-
-  // Draw a black rectangle around the grid
-  ctx.strokeStyle = "black"; // Set stroke color to black
-  ctx.lineWidth = 2; // Set line width
-  ctx.strokeRect(marginX, marginY, gridSizeX, gridSizeY);
-}
-
-// Initialize the canvas grid
-drawGrid();
-
-// Call this function for each slider with its corresponding display element
-updateSliderValue("x", "xValue");
-updateSliderValue("y", "yValue");
-updateSliderValue("maxDeflection", "maxDeflectionValue");
-updateSliderValue("maxDepth", "maxDepthValue");
-updateSliderValue("maxRatio", "maxRatioValue");
-
-function getGridCoordinates() {
-  var xSliderValue = parseInt(document.getElementById("x").value);
-  var ySliderValue = parseInt(document.getElementById("y").value);
-
-  var spacingX = 200; // Spacing between points in x direction
-  var spacingY = 200; // Spacing between points in y direction
-
-  var numOfPointsX = xSliderValue / 200 + 1; // Number of points in x direction
-  var numOfPointsY = ySliderValue / 200 + 1; // Number of points in y direction
-
-  var coordinates = [];
-
-  for (var i = 0; i < numOfPointsY; i++) {
-    for (var j = 0; j < numOfPointsX; j++) {
-      var xCoord = j * spacingX;
-      var yCoord = i * spacingY;
-      coordinates.push([xCoord, yCoord]);
-    }
-  }
-
-  return coordinates;
-}
-
+// ///////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
+//                   RENDERING RESULTS
+// ///////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////
 function renderConfigBasic(data) {
   let coordinates = getGridCoordinates();
   let canvas = document.getElementById("MCTS_floor_canvas");
@@ -1031,45 +1159,8 @@ function annotateConfig(data) {
   });
 }
 
-function gridData() {
-  let canvas = document.getElementById("MCTS_floor_canvas");
 
-  // Define maximum values for sliders
-  var maxX = document.getElementById("x").max;
-  var maxY = document.getElementById("y").max;
-
-  // Get the values of xSlider and ySlider
-  var xSlider = parseInt(document.getElementById("x").value);
-  var ySlider = parseInt(document.getElementById("y").value);
-
-  // Calculate margins as a fraction of the canvas dimensions
-  var marginX = canvas.width * 0.1;
-  var marginY = canvas.height * 0.1;
-
-  // Adjusted width and height for grid drawing
-  var portWidth = canvas.width - 2 * marginX;
-  var portHeight = canvas.height - 2 * marginY;
-
-  var scaleX = portWidth / maxX;
-  var scaleY = portHeight / maxY;
-
-  var gridSizeX = xSlider * scaleX;
-  var gridSizeY = ySlider * scaleY;
-
-  return {
-    marginX,
-    marginY,
-    portWidth,
-    portHeight,
-    scaleX,
-    scaleY,
-    gridSizeX,
-    gridSizeY,
-    maxX,
-    maxY,
-  };
-}
-
+// Renders whenever a radio button has been changed
 document.querySelectorAll('input[name="renderOption"]').forEach((radio) => {
   radio.addEventListener("change", (event) => {
     console.log(responseData);
@@ -1083,6 +1174,7 @@ document.querySelectorAll('input[name="renderOption"]').forEach((radio) => {
   });
 });
 
+// renders a specific render option
 function displayResultsGrid(data, selectedOption) {
   // Call the appropriate rendering function based on the selected radio button
   switch (selectedOption) {
