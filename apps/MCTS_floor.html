@@ -84,9 +84,10 @@
         <p class="text-lg text-gray-600 leading-relaxed">
           The following program yields the optimal timber floor framing solution
           for a variable rectangular floor layout under a given set of loading
-          parameters and design constraints. The program is based on the
-          Monte-Carlo-Tree-Search algorithm and is capable of finding a near
-          optimal solution in a matter of seconds.
+          parameters and design constraints. The algorithm does an exhaustive search
+          of promising solution spaces and is capable of finding an
+          optimal configuration in a matter of seconds. It presents to the user a selection 
+          of optimal solutions, in increasing order of complexity.
         </p>
       </section>
 
@@ -226,7 +227,7 @@
                   type="range"
                   min="90"
                   max="300"
-                  step="1"
+                  step="5"
                   value="200"
                   class="range range-sm [--range-shdw:#172554]"
                   id="maxDepth"

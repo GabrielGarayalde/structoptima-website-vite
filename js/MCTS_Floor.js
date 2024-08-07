@@ -151,70 +151,91 @@ function updateCanvas() {
   highlightSelectedNodes(); // Highlight selected nodes
 }
 
+
+
 function renderLoadsOnCanvas(loads) {
   const { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData(); // Reuse the gridData for canvas metrics
-  const colors = ["red", "green", "blue", "purple", "orange"]; // Define a set of colors for different loads
+  // const colors = ["red", "green", "blue", "purple", "orange"]; // Define a set of colors for different loads
+  const colors = ["#FFB3BA", "#FFDFBA", "#B3E5FC", "#BAFFC9", "#BAE1FF", "#D1C4E9", "#C5E1A5"]; // Updated pastel colors
+
+  var xSlider = parseInt(document.getElementById("x").value);
+  var ySlider = parseInt(document.getElementById("y").value);
 
   loads.forEach((load, index) => {
     const color = colors[index % colors.length]; // Cycle through colors for each load
     ctx.fillStyle = color;
 
-    const x = marginX + load.start[0] * scaleX;
-    const y = marginY + gridSizeY - load.start[1] * scaleY;
-    const width = (load.end[0] - load.start[0]) * scaleX;
-    const height = (load.start[1] - load.end[1]) * scaleY;
+    const shadingWidth = 200 * scaleX; // Adjust shading width as needed
 
-    // Draw the rectangle
-    ctx.fillRect(x, y, width, height);
+    const minX = Math.min(load.start[0], load.end[0]);
+    const minY = Math.min(load.start[1], load.end[1]);
+    const maxX = Math.max(load.start[0], load.end[0]);
+    const maxY = Math.max(load.start[1], load.end[1]);
+
+    const screen_minX = marginX + minX * scaleX;
+    const screen_minY = marginY + gridSizeY - maxY * scaleY;
+
+    const selectedNodesWidth = (maxX - minX) * scaleX;
+    const selectedNodesHeight = (maxY - minY) * scaleY;
+
+    var adjust_minX = shadingWidth / 2;
+    var adjust_height = shadingWidth / 2;
+    var adjust_width = shadingWidth / 2;
+    var adjust_minY = shadingWidth / 2;
+
+    if (minX === 0) {
+      adjust_minX = 0;
+    }
+
+    if (minY === 0) {
+      adjust_height = 0;
+    }
+
+    if (maxX === xSlider) {
+      adjust_width = 0;
+    }
+
+    if (maxY === ySlider) {
+      adjust_minY = 0;
+    }
+
+    const finalX = screen_minX - adjust_minX;
+    const finalY = screen_minY - adjust_minY;
+    const finalWidth = selectedNodesWidth + adjust_minX + adjust_width;
+    const finalHeight = selectedNodesHeight + adjust_minY + adjust_height;
+    const cornerRadius = 10; // Adjust corner radius as needed
+
+    // Draw the rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(finalX + cornerRadius, finalY);
+    ctx.lineTo(finalX + finalWidth - cornerRadius, finalY);
+    ctx.quadraticCurveTo(finalX + finalWidth, finalY, finalX + finalWidth, finalY + cornerRadius);
+    ctx.lineTo(finalX + finalWidth, finalY + finalHeight - cornerRadius);
+    ctx.quadraticCurveTo(finalX + finalWidth, finalY + finalHeight, finalX + finalWidth - cornerRadius, finalY + finalHeight);
+    ctx.lineTo(finalX + cornerRadius, finalY + finalHeight);
+    ctx.quadraticCurveTo(finalX, finalY + finalHeight, finalX, finalY + finalHeight - cornerRadius);
+    ctx.lineTo(finalX, finalY + cornerRadius);
+    ctx.quadraticCurveTo(finalX, finalY, finalX + cornerRadius, finalY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw the light border
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"; // Light border color
+    ctx.stroke();
 
     // Draw the numerical identifier in the middle of the rectangle
     ctx.fillStyle = "white"; // Use white for better visibility
     ctx.font = "16px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(`Pressure ${index + 1}`, x + width / 2, y + height / 2);
+    ctx.fillText(
+      `Pressure ${index + 1}`,
+      finalX + finalWidth / 2,
+      finalY + finalHeight / 2
+    );
   });
 }
 
-// function highlightSelectedNodes() {
-//   var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
-
-//   ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Semi-transparent red for selected nodes area
-
-//   if (selectedNodes.length === 0) {
-//     console.log("No nodes selected");
-//     return;
-//   }
-
-//   selectedNodes.forEach((node) => {
-//     const nodeX = node[0];
-//     const nodeY = node[1];
-
-//     const screenX = marginX + nodeX * scaleX;
-//     const screenY = marginY + gridSizeY - nodeY * scaleY;
-
-//     const shadingWidth = 200*scaleX; // Adjust shading width as needed
-//     const shadingHeight = 200*scaleY; // Adjust shading height as needed
-
-//     ctx.fillRect(
-//       screenX - shadingWidth / 2,
-//       screenY - shadingHeight / 2,
-//       shadingWidth,
-//       shadingHeight
-//     );
-//   });
-
-//   // Determine the bounds of the selected nodes
-//   let minX = Math.min(...selectedNodes.map((node) => node[0]));
-//   let maxX = Math.max(...selectedNodes.map((node) => node[0]));
-//   let minY = Math.min(...selectedNodes.map((node) => node[1]));
-//   let maxY = Math.max(...selectedNodes.map((node) => node[1]));
-
-//   console.log(minX, maxX)
-//   // Assuming node coordinates are structured as [x, y]
-//   // Find the corners of the rectangle for the pressure area
-//   startNode = [minX, minY];
-//   endNode = [maxX, maxY];
-// }
 
 function highlightSelectedNodes() {
   var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
@@ -235,42 +256,43 @@ function highlightSelectedNodes() {
   let maxX = Math.max(...selectedNodes.map((node) => node[0]));
   let maxY = Math.max(...selectedNodes.map((node) => node[1]));
 
+  // console.log("min", minX,minY)
+  // console.log("max", maxX,maxY)
+
   const screen_minX = marginX + minX * scaleX;
   const screen_minY = marginY + gridSizeY - maxY * scaleY;
 
   const shadingWidth = 200 * scaleX; // Adjust shading width as needed
-  const shadingHeight = 200 * scaleY; // Adjust shading height as needed
 
   const selectedNodesWidth = (maxX - minX) * scaleX;
   const selectedNodesHeight = (maxY - minY) * scaleY;
 
-  var adjust_minX = 0;
-  var adjust_height = 0;
-  var adjust_width = 0;
-  var adjust_minY = 0;
+  var adjust_minX = shadingWidth / 2;
+  var adjust_height = shadingWidth / 2;
+  var adjust_width = shadingWidth / 2;
+  var adjust_minY = shadingWidth / 2;
 
   if (minX === 0) {
-    adjust_minX = shadingWidth / 2;
+    adjust_minX = 0;
   }
 
   if (minY === 0) {
-    adjust_height = -shadingWidth / 2;
+    adjust_height = 0;
   }
 
   if (maxX === xSlider) {
-    adjust_width = -shadingWidth / 2;
+    adjust_width = 0;
   }
 
   if (maxY === ySlider) {
-    adjust_minY = shadingWidth / 2;
+    adjust_minY = 0;
   }
 
-  // console.log(selectedNodesWidth, selectedNodesHeight)
   ctx.fillRect(
-    screen_minX - shadingWidth / 2 + adjust_minX,
-    screen_minY - shadingHeight / 2 + adjust_minY,
-    selectedNodesWidth + shadingWidth + adjust_width,
-    selectedNodesHeight + shadingWidth + adjust_height
+    screen_minX - adjust_minX,
+    screen_minY - adjust_minY,
+    selectedNodesWidth + adjust_minX + adjust_width,
+    selectedNodesHeight + adjust_minY + adjust_height
   );
 
   startNode = [minX, minY];
