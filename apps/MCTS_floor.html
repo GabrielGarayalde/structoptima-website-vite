@@ -84,10 +84,10 @@
         <p class="text-lg text-gray-600 leading-relaxed">
           The following program yields the optimal timber floor framing solution
           for a variable rectangular floor layout under a given set of loading
-          parameters and design constraints. The algorithm does an exhaustive search
-          of promising solution spaces and is capable of finding an
-          optimal configuration in a matter of seconds. It presents to the user a selection 
-          of optimal solutions, in increasing order of complexity.
+          parameters and design constraints. The algorithm does an exhaustive
+          search of promising solution spaces and is capable of finding an
+          optimal configuration in a matter of seconds. It presents to the user
+          a selection of optimal solutions, in increasing order of complexity.
         </p>
       </section>
 
@@ -164,14 +164,9 @@
 
           <!-- Constraints Section -->
           <div
-            
             class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box mb-4"
           >
-            <input
-              type="radio"
-              name="accordion"
-              class="peer"
-            />
+            <input type="radio" name="accordion" class="peer" />
             <div
               class="collapse-title text-xl font-medium bg-primary text-white"
             >
@@ -298,7 +293,10 @@
                   id="calculate_btn"
                   class="btn bg-primary text-white hover:bg-blue-800"
                 >
-                  <span id="calculate_spinner" class="hidden loading loading-spinner loading-sm mr-2"></span>
+                  <span
+                    id="calculate_spinner"
+                    class="hidden loading loading-spinner loading-sm mr-2"
+                  ></span>
                   CALCULATE
                 </button>
 
@@ -342,12 +340,15 @@
           </div>
           <!-- New Section for Cards -->
           <div class="border border-base-300 bg-base-100 rounded-box mb-4 p-4">
-            <h3 class="text-xl font-medium mb-4">Optimal Floor Configurations</h3>
-            <div id="responseCardsContainer" class="flex gap-2 overflow-x-auto"></div>
+            <h3 class="text-xl font-medium mb-4">
+              Optimal Floor Configurations
+            </h3>
+            <div
+              id="responseCardsContainer"
+              class="flex gap-2 overflow-x-auto"
+            ></div>
           </div>
-
         </div>
-
 
         <!-- Results Display -->
         <div
@@ -436,7 +437,60 @@
     </footer>
 
     <!-- Modal -->
+    <!-- Modal -->
     <dialog id="loadModal" class="modal">
+      <div class="modal-box">
+        <div class="text-2xl font-bold">Insert loads here</div>
+
+        <div class="p-4 space-y-4">
+          <h3 class="font-bold text-lg">Pressure Load Detected</h3>
+
+          <!-- Load Name Input -->
+          <div class="flex items-center mb-4">
+            <p class="mr-2">Name:</p>
+            <input
+              type="text"
+              id="loadNameInput"
+              placeholder="Optional Load Name"
+              class="input input-bordered w-48"
+            />
+          </div>
+
+          <div class="flex items-center mb-4">
+            <p class="mr-2">G:</p>
+            <input
+              type="number"
+              id="loadInput1"
+              placeholder="Enter Dead load G"
+              class="input input-bordered w-48"
+              step="0.1"
+            />
+            <p class="ml-2">kPa</p>
+          </div>
+
+          <div class="flex items-center mb-4">
+            <p class="mr-2">Q:</p>
+            <input
+              type="number"
+              id="loadInput2"
+              placeholder="Enter Live load Q"
+              class="input input-bordered w-48"
+              step="0.1"
+            />
+            <p class="ml-2">kPa</p>
+          </div>
+        </div>
+
+        <div class="modal-action">
+          <form method="dialog">
+            <button id="cancelButton" class="btn">Cancel</button>
+            <button id="acceptButton" class="btn btn-primary">Accept</button>
+          </form>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- <dialog id="loadModal" class="modal">
       <div class="modal-box">
         <div class="text-2xl font-bold">Insert loads here</div>
 
@@ -473,7 +527,7 @@
           </form>
         </div>
       </div>
-    </dialog>
+    </dialog> -->
 
     <script type="module" src="../js/MCTS_Floor.js"></script>
   </body>

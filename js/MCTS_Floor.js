@@ -34,6 +34,7 @@ var selectedNodes = [];
 var canvas = document.getElementById("MCTS_floor_canvas");
 var ctx = canvas.getContext("2d");
 let responseData = null;
+let currentLoadType = "pressure"; // Default value
 
 // ///////////////////////////////////////////////////////
 // ----       UPDATING THE CANVAS w Loads           ----//
@@ -152,7 +153,6 @@ function updateCanvas() {
 }
 
 
-
 function renderLoadsOnCanvas(loads) {
   const { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData(); // Reuse the gridData for canvas metrics
   // const colors = ["red", "green", "blue", "purple", "orange"]; // Define a set of colors for different loads
@@ -161,6 +161,7 @@ function renderLoadsOnCanvas(loads) {
   var xSlider = parseInt(document.getElementById("x").value);
   var ySlider = parseInt(document.getElementById("y").value);
 
+  console.log(loads)
   loads.forEach((load, index) => {
     const color = colors[index % colors.length]; // Cycle through colors for each load
     ctx.fillStyle = color;
@@ -219,23 +220,48 @@ function renderLoadsOnCanvas(loads) {
     ctx.closePath();
     ctx.fill();
 
+    let load_multiplier
+    let load_units
+    if (load.type === 'pressure') {
+      load_multiplier = 1000;
+      load_units = 'kPa';
+    } else if (load.type === 'line') {
+      load_multiplier = 1;
+      load_units = 'kNm';
+    } else if (load.type === 'point') {
+      load_multiplier = 0.001;
+      load_units = 'kN';
+    } else {
+      load_multiplier = 1;
+      load_units = ''; // Default case if load type doesn't match any of the above
+    }
+
+    let load_name = load.name || load.type;
+
     // Draw the light border
     ctx.lineWidth = 4;
     ctx.strokeStyle = "rgba(255, 255, 255, 0.8)"; // Light border color
     ctx.stroke();
 
     // Draw the numerical identifier in the middle of the rectangle
-    ctx.fillStyle = "white"; // Use white for better visibility
-    ctx.font = "16px Arial";
+    ctx.fillStyle = "black"; // Use white for better visibility
+    ctx.font = "14px Arial";
     ctx.textAlign = "center";
+    // Draw the first line with the index and load type
     ctx.fillText(
-      `Pressure ${index + 1}`,
+      `${index + 1}: ${load_name} [${load_units}]`,
       finalX + finalWidth / 2,
-      finalY + finalHeight / 2
+      finalY + finalHeight / 2 - 10 // Move this line up slightly
+    );
+
+    // Draw the second line with the load details
+    ctx.fillText(
+      `{G: ${(load.G * load_multiplier).toFixed(2)}, Q: ${(load.Q * load_multiplier).toFixed(2)}}`,
+      finalX + finalWidth / 2,
+      finalY + finalHeight / 2 + 10 // Move this line down slightly
     );
   });
 }
-
 
 function highlightSelectedNodes() {
   var { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData();
@@ -344,11 +370,60 @@ function getGridCoordinates() {
   return coordinates;
 }
 
-// Show the load modal
-function showLoadModal() {
-  var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+// Detect the load type based on selected nodes
+function detectLoadType(selectedNodes) {
+  if (selectedNodes.length === 1) {
+    return 'point';
+  }
+
+  const xValues = selectedNodes.map(node => node[0]);
+  const yValues = selectedNodes.map(node => node[1]);
+
+  const xRange = Math.max(...xValues) - Math.min(...xValues);
+  const yRange = Math.max(...yValues) - Math.min(...yValues);
+
+  if (xRange === 0) {
+    return 'line';
+  } else if (yRange === 0) {
+    return 'line';
+  } else {
+    return 'pressure';
+  }
+}
+
+// Show the load modal with dynamic content
+function showLoadModal(selectedNodes) {
+  const loadType = detectLoadType(selectedNodes);
+  currentLoadType = loadType; // Store the detected load type
+
+  const modal = document.getElementById("loadModal");
+  const loadTitle = modal.querySelector("h3");
+  const gUnit = modal.querySelector("#loadInput1").nextElementSibling;
+  const qUnit = modal.querySelector("#loadInput2").nextElementSibling;
+
+  if (loadType === 'point') {
+    loadTitle.textContent = "Point Load Detected";
+    gUnit.textContent = "kN";
+    qUnit.textContent = "kN";
+  } else if (loadType === 'line') {
+    loadTitle.textContent = "Line Load Detected";
+    gUnit.textContent = "kNm";
+    qUnit.textContent = "kNm";
+  } else {
+    loadTitle.textContent = "Pressure Load Detected";
+    gUnit.textContent = "kPa";
+    qUnit.textContent = "kPa";
+  }
+
   modal.showModal();
 }
+
+
+// Show the load modal
+// function showLoadModal(selectedNodes) {
+//   var modal = document.getElementById("loadModal"); // Ensure this ID matches your dialog's ID
+//   modal.showModal();
+// }
 
 // close the load modal
 function closeLoadModal() {
@@ -379,7 +454,7 @@ canvas.addEventListener("mouseup", function (e) {
   selectNodesInRectangle();
   if (isDragging && selectedNodes.length > 0) {
     updateCanvas(); // Update canvas if needed
-    showLoadModal(); // Show the modal only if nodes have been selected
+    showLoadModal(selectedNodes); // Show the modal only if nodes have been selected
   }
   isDragging = false; // Reset dragging flag
 });
@@ -450,21 +525,35 @@ document
 
 // accepts the load input from the modal
 function acceptLoad() {
-  const loadG = document.getElementById("loadInput1").value / 1000;
-  const loadQ = document.getElementById("loadInput2").value / 1000;
+
+  let load_multiplier = 1
+  if (currentLoadType === 'point') {
+    load_multiplier = 1000;
+  } else if (currentLoadType === 'line') {
+    load_multiplier = 1;
+  } else if (currentLoadType === 'pressure') {
+    load_multiplier = 0.001;
+  }
+  
+
+
+  const loadName = document.getElementById("loadNameInput").value.trim();
+  const loadG = document.getElementById("loadInput1").value * load_multiplier;
+  const loadQ = document.getElementById("loadInput2").value * load_multiplier;
 
   // Create a new load object
   const newLoad = {
     start: startNode,
     end: endNode,
-    type: "pressure",
+    type: currentLoadType, // Use the dynamically determined load type
+    name: loadName !== "" ? loadName : null, // Set to null if no name provided
     G: parseFloat(loadG),
     Q: parseFloat(loadQ),
   };
 
   // Append new load to the data array
   loadsData.push(newLoad);
-  // console.log(loadsData);
+
   // Update the UI or further process the data
   updateLoadsTextContainerDisplay(); // Assumes there's a function to update UI
   drawGrid();
@@ -472,7 +561,8 @@ function acceptLoad() {
   closeLoadModal(); // Close modal after accepting
 }
 
-// this renders the load in the loads card
+
+
 function updateLoadsTextContainerDisplay() {
   const loadsContainer = document.getElementById("loads-values-container");
   // Clear the existing contents of the container
@@ -480,15 +570,35 @@ function updateLoadsTextContainerDisplay() {
 
   // Loop through each load in the loadsData and create a row for each
   loadsData.forEach((load, index) => {
+    // Determine the load multiplier and units based on the load type
+    let load_multiplier;
+    let load_units;
+
+    if (load.type === 'pressure') {
+      load_multiplier = 1000;
+      load_units = 'kPa';
+    } else if (load.type === 'line') {
+      load_multiplier = 1;
+      load_units = 'kNm';
+    } else if (load.type === 'point') {
+      load_multiplier = 0.001;
+      load_units = 'kN';
+    } else {
+      load_multiplier = 1;
+      load_units = ''; // Default case if load type doesn't match any of the above
+    }
+
+    let load_name = load.name || load.type;
+
     const newRow = document.createElement("div");
     newRow.className = "grid grid-cols-4 gap-4 items-center"; // Updated for 4 columns
 
     newRow.innerHTML = `
           <div class="text-center">
-              <span>Pressure ${index + 1}:</span>
+              <span>${index + 1}: ${load_name} load</span>
           </div>
-          <div class="text-center">${load.G * 1000} kPa</div>
-          <div class="text-center">${load.Q * 1000} kPa</div>
+          <div class="text-center">${(load.G * load_multiplier).toFixed(2)} ${load_units}</div>
+          <div class="text-center">${(load.Q * load_multiplier).toFixed(2)} ${load_units}</div>
           <div class="text-center">
               <button class="btn btn-error deleteBtn" data-index="${index}">Delete</button>
           </div>
@@ -506,6 +616,7 @@ function updateLoadsTextContainerDisplay() {
     });
   });
 }
+
 
 // Function to handle deletion of a load
 function deleteLoad(index) {
