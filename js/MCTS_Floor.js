@@ -894,11 +894,11 @@ function displayResults(data) {
       displacement_percent = displacement_percent.toFixed(3);
 
       let ratio = Math.round(s.min_displacement_ratio);
-      let moment = s.max_moment / 10e6;
+      let moment = s.max_moment * 1e-6;
       moment = moment.toFixed(3);
       let moment_percent = s.max_moment_ratio * 100;
       moment_percent = moment_percent.toFixed(3);
-      let shear = s.max_shear / 10e3;
+      let shear = s.max_shear * 1e-3;
       shear = shear.toFixed(3);
       let shear_percent = s.max_shear_ratio * 100;
       shear_percent = shear_percent.toFixed(3);
