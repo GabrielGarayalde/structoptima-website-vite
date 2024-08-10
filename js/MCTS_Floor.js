@@ -152,16 +152,23 @@ function updateCanvas() {
   highlightSelectedNodes(); // Highlight selected nodes
 }
 
-
 function renderLoadsOnCanvas(loads) {
   const { marginX, marginY, scaleX, scaleY, gridSizeY } = gridData(); // Reuse the gridData for canvas metrics
   // const colors = ["red", "green", "blue", "purple", "orange"]; // Define a set of colors for different loads
-  const colors = ["#FFB3BA", "#FFDFBA", "#B3E5FC", "#BAFFC9", "#BAE1FF", "#D1C4E9", "#C5E1A5"]; // Updated pastel colors
+  const colors = [
+    "#FFB3BA",
+    "#FFDFBA",
+    "#B3E5FC",
+    "#BAFFC9",
+    "#BAE1FF",
+    "#D1C4E9",
+    "#C5E1A5",
+  ]; // Updated pastel colors
 
   var xSlider = parseInt(document.getElementById("x").value);
   var ySlider = parseInt(document.getElementById("y").value);
 
-  console.log(loads)
+  console.log(loads);
   loads.forEach((load, index) => {
     const color = colors[index % colors.length]; // Cycle through colors for each load
     ctx.fillStyle = color;
@@ -210,30 +217,45 @@ function renderLoadsOnCanvas(loads) {
     ctx.beginPath();
     ctx.moveTo(finalX + cornerRadius, finalY);
     ctx.lineTo(finalX + finalWidth - cornerRadius, finalY);
-    ctx.quadraticCurveTo(finalX + finalWidth, finalY, finalX + finalWidth, finalY + cornerRadius);
+    ctx.quadraticCurveTo(
+      finalX + finalWidth,
+      finalY,
+      finalX + finalWidth,
+      finalY + cornerRadius
+    );
     ctx.lineTo(finalX + finalWidth, finalY + finalHeight - cornerRadius);
-    ctx.quadraticCurveTo(finalX + finalWidth, finalY + finalHeight, finalX + finalWidth - cornerRadius, finalY + finalHeight);
+    ctx.quadraticCurveTo(
+      finalX + finalWidth,
+      finalY + finalHeight,
+      finalX + finalWidth - cornerRadius,
+      finalY + finalHeight
+    );
     ctx.lineTo(finalX + cornerRadius, finalY + finalHeight);
-    ctx.quadraticCurveTo(finalX, finalY + finalHeight, finalX, finalY + finalHeight - cornerRadius);
+    ctx.quadraticCurveTo(
+      finalX,
+      finalY + finalHeight,
+      finalX,
+      finalY + finalHeight - cornerRadius
+    );
     ctx.lineTo(finalX, finalY + cornerRadius);
     ctx.quadraticCurveTo(finalX, finalY, finalX + cornerRadius, finalY);
     ctx.closePath();
     ctx.fill();
 
-    let load_multiplier
-    let load_units
-    if (load.type === 'pressure') {
+    let load_multiplier;
+    let load_units;
+    if (load.type === "pressure") {
       load_multiplier = 1000;
-      load_units = 'kPa';
-    } else if (load.type === 'line') {
+      load_units = "kPa";
+    } else if (load.type === "line") {
       load_multiplier = 1;
-      load_units = 'kNm';
-    } else if (load.type === 'point') {
+      load_units = "kNm";
+    } else if (load.type === "point") {
       load_multiplier = 0.001;
-      load_units = 'kN';
+      load_units = "kN";
     } else {
       load_multiplier = 1;
-      load_units = ''; // Default case if load type doesn't match any of the above
+      load_units = ""; // Default case if load type doesn't match any of the above
     }
 
     let load_name = load.name || load.type;
@@ -256,7 +278,9 @@ function renderLoadsOnCanvas(loads) {
 
     // Draw the second line with the load details
     ctx.fillText(
-      `{G: ${(load.G * load_multiplier).toFixed(2)}, Q: ${(load.Q * load_multiplier).toFixed(2)}}`,
+      `{G: ${(load.G * load_multiplier).toFixed(2)}, Q: ${(
+        load.Q * load_multiplier
+      ).toFixed(2)}}`,
       finalX + finalWidth / 2,
       finalY + finalHeight / 2 + 10 // Move this line down slightly
     );
@@ -373,21 +397,21 @@ function getGridCoordinates() {
 // Detect the load type based on selected nodes
 function detectLoadType(selectedNodes) {
   if (selectedNodes.length === 1) {
-    return 'point';
+    return "point";
   }
 
-  const xValues = selectedNodes.map(node => node[0]);
-  const yValues = selectedNodes.map(node => node[1]);
+  const xValues = selectedNodes.map((node) => node[0]);
+  const yValues = selectedNodes.map((node) => node[1]);
 
   const xRange = Math.max(...xValues) - Math.min(...xValues);
   const yRange = Math.max(...yValues) - Math.min(...yValues);
 
   if (xRange === 0) {
-    return 'line';
+    return "line";
   } else if (yRange === 0) {
-    return 'line';
+    return "line";
   } else {
-    return 'pressure';
+    return "pressure";
   }
 }
 
@@ -401,11 +425,11 @@ function showLoadModal(selectedNodes) {
   const gUnit = modal.querySelector("#loadInput1").nextElementSibling;
   const qUnit = modal.querySelector("#loadInput2").nextElementSibling;
 
-  if (loadType === 'point') {
+  if (loadType === "point") {
     loadTitle.textContent = "Point Load Detected";
     gUnit.textContent = "kN";
     qUnit.textContent = "kN";
-  } else if (loadType === 'line') {
+  } else if (loadType === "line") {
     loadTitle.textContent = "Line Load Detected";
     gUnit.textContent = "kNm";
     qUnit.textContent = "kNm";
@@ -417,7 +441,6 @@ function showLoadModal(selectedNodes) {
 
   modal.showModal();
 }
-
 
 // Show the load modal
 // function showLoadModal(selectedNodes) {
@@ -525,17 +548,14 @@ document
 
 // accepts the load input from the modal
 function acceptLoad() {
-
-  let load_multiplier = 1
-  if (currentLoadType === 'point') {
+  let load_multiplier = 1;
+  if (currentLoadType === "point") {
     load_multiplier = 1000;
-  } else if (currentLoadType === 'line') {
+  } else if (currentLoadType === "line") {
     load_multiplier = 1;
-  } else if (currentLoadType === 'pressure') {
+  } else if (currentLoadType === "pressure") {
     load_multiplier = 0.001;
   }
-  
-
 
   const loadName = document.getElementById("loadNameInput").value.trim();
   const loadG = document.getElementById("loadInput1").value * load_multiplier;
@@ -554,14 +574,13 @@ function acceptLoad() {
   // Append new load to the data array
   loadsData.push(newLoad);
 
+  console.log(loadsData);
   // Update the UI or further process the data
   updateLoadsTextContainerDisplay(); // Assumes there's a function to update UI
   drawGrid();
   renderLoadsOnCanvas(loadsData); // Update canvas rendering
   closeLoadModal(); // Close modal after accepting
 }
-
-
 
 function updateLoadsTextContainerDisplay() {
   const loadsContainer = document.getElementById("loads-values-container");
@@ -574,18 +593,18 @@ function updateLoadsTextContainerDisplay() {
     let load_multiplier;
     let load_units;
 
-    if (load.type === 'pressure') {
+    if (load.type === "pressure") {
       load_multiplier = 1000;
-      load_units = 'kPa';
-    } else if (load.type === 'line') {
+      load_units = "kPa";
+    } else if (load.type === "line") {
       load_multiplier = 1;
-      load_units = 'kNm';
-    } else if (load.type === 'point') {
+      load_units = "kNm";
+    } else if (load.type === "point") {
       load_multiplier = 0.001;
-      load_units = 'kN';
+      load_units = "kN";
     } else {
       load_multiplier = 1;
-      load_units = ''; // Default case if load type doesn't match any of the above
+      load_units = ""; // Default case if load type doesn't match any of the above
     }
 
     let load_name = load.name || load.type;
@@ -597,8 +616,12 @@ function updateLoadsTextContainerDisplay() {
           <div class="text-center">
               <span>${index + 1}: ${load_name} load</span>
           </div>
-          <div class="text-center">${(load.G * load_multiplier).toFixed(2)} ${load_units}</div>
-          <div class="text-center">${(load.Q * load_multiplier).toFixed(2)} ${load_units}</div>
+          <div class="text-center">${(load.G * load_multiplier).toFixed(
+            2
+          )} ${load_units}</div>
+          <div class="text-center">${(load.Q * load_multiplier).toFixed(
+            2
+          )} ${load_units}</div>
           <div class="text-center">
               <button class="btn btn-error deleteBtn" data-index="${index}">Delete</button>
           </div>
@@ -616,7 +639,6 @@ function updateLoadsTextContainerDisplay() {
     });
   });
 }
-
 
 // Function to handle deletion of a load
 function deleteLoad(index) {
@@ -786,6 +808,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+});
+
+// Event listener for the clear results button
+document.addEventListener("DOMContentLoaded", () => {
+  const clearButton = document.getElementById("clearBtn");
+  clearButton.addEventListener("click", () => {
+    resetInputs();
+    calculateSpinner.classList.add("hidden");
+    calculateBtn.disabled = false;
+  });
+
 });
 
 // Event listener for render options
@@ -990,7 +1023,6 @@ export function callAPI() {
   cardContainer.innerHTML = "";
 
   let targetDepth = 0;
-  let terminalDepthReached = false;
   const responses = JSON.parse(localStorage.getItem("apiResponses")) || [];
 
   function makeAPICall() {
@@ -1060,7 +1092,12 @@ export function callAPI() {
             card.innerHTML = cardHtml;
             const radio = card.querySelector('input[type="radio"]');
             cardContainer.appendChild(card);
+            // Automatically select the newly created card
+            radio.checked = true;
 
+            // Trigger the click event to load the response data
+            radio.click();
+            
             radio.addEventListener("click", () => {
               const storedResponses = JSON.parse(
                 localStorage.getItem("apiResponses")
@@ -1091,7 +1128,6 @@ export function callAPI() {
 
           // Check if terminal depth is reached
           if (responseData.terminal_depth === true) {
-            terminalDepthReached = true;
             calculateSpinner.classList.add("hidden");
             calculateBtn.disabled = false;
           } else {
@@ -1110,10 +1146,14 @@ export function callAPI() {
         } catch (error) {
           console.error("Error parsing response data:", error);
           console.error("Data causing the error:", data);
+          calculateSpinner.classList.add("hidden");
+          calculateBtn.disabled = false;
         }
       })
       .catch((error) => {
         console.log("Fetch error:", error);
+        calculateSpinner.classList.add("hidden");
+        calculateBtn.disabled = false;
       });
   }
 

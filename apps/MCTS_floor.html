@@ -303,6 +303,9 @@
                 <button id="downloadBtn" class="btn">
                   Save Results to File
                 </button>
+                <button id="clearBtn" class="btn bg-orange-600">
+                  Clear Results
+                </button>
               </div>
               <div id="results_slider_tile"></div>
               <!-- Radio buttons for configuration types -->
@@ -437,7 +440,6 @@
     </footer>
 
     <!-- Modal -->
-    <!-- Modal -->
     <dialog id="loadModal" class="modal">
       <div class="modal-box">
         <div class="text-2xl font-bold">Insert loads here</div>
@@ -489,45 +491,6 @@
         </div>
       </div>
     </dialog>
-
-    <!-- <dialog id="loadModal" class="modal">
-      <div class="modal-box">
-        <div class="text-2xl font-bold">Insert loads here</div>
-
-        <div class="p-4 space-y-4">
-          <h3 class="font-bold text-lg">Pressure Load Detected</h3>
-          <div class="flex items-center mb-4">
-            <p class="mr-2">G:</p>
-            <input
-              type="number"
-              id="loadInput1"
-              placeholder="Enter Dead load G"
-              class="input input-bordered w-48"
-              step="0.1"
-            />
-            <p class="ml-2">kPa</p>
-          </div>
-          <div class="flex items-center mb-4">
-            <p class="mr-2">Q:</p>
-            <input
-              type="number"
-              id="loadInput2"
-              placeholder="Enter Live load Q"
-              class="input input-bordered w-48"
-              step="0.1"
-            />
-            <p class="ml-2">kPa</p>
-          </div>
-        </div>
-
-        <div class="modal-action">
-          <form method="dialog">
-            <button id="cancelButton" class="btn">Cancel</button>
-            <button id="acceptButton" class="btn btn-primary">Accept</button>
-          </form>
-        </div>
-      </div>
-    </dialog> -->
 
     <script type="module" src="../js/MCTS_Floor.js"></script>
   </body>
